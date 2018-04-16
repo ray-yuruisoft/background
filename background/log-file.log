@@ -1,6 +1,0 @@
-2018-04-15 16:17:14,259 [1] INFO  background.Program [(null)] - test!!!
-2018-04-15 16:17:14,431 [1] ERROR background.Program [(null)] - test.
-2018-04-15 16:19:13,802 [1] INFO  background.Program [(null)] - test!!!
-2018-04-15 16:19:13,910 [1] DEBUG background.Program [(null)] - this is debug.
-2018-04-15 16:19:13,911 [1] ERROR background.Program [(null)] - test.
-2018-04-15 16:19:13,911 [1] WARN  background.Program [(null)] - this is warn.
