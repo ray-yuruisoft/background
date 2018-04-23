@@ -1,8 +1,10 @@
 ﻿using System;
-using System.Runtime.Loader;
+using System.Threading;
 using System.Threading.Tasks;
+using background.Caches;
 using background.Tools;
 using log4net;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace background
 {
@@ -24,6 +26,7 @@ namespace background
         }
         public static async Task MainAsync(string[] args)
         {
+
             Console.WriteLine("程序开始运行");
             //捕获Ctrl+C事件
             Console.CancelKeyPress += (object sender, ConsoleCancelEventArgs e) =>

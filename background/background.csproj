@@ -7,6 +7,8 @@
 
   <ItemGroup>
     <PackageReference Include="log4net" Version="2.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Redis" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.0.1" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.0.1" />
     <PackageReference Include="Quartz" Version="3.0.4" />
@@ -14,7 +16,6 @@
     <PackageReference Include="Dapper" Version="1.50.4" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Tools\" />
     <Folder Include="Jobs\" />
     <Folder Include="Data\" />
     <Folder Include="Models\" />
