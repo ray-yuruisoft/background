@@ -19,4 +19,7 @@
     <Folder Include="Data\" />
     <Folder Include="Models\" />
   </ItemGroup>
+  <ItemGroup>
+    <None Remove="log-file.log" />
+  </ItemGroup>
 </Project>
