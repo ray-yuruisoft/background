@@ -22,9 +22,7 @@ namespace background.Jobs
         public Task Execute(IJobExecutionContext context)
         {
             log.Info("DataSaveJob开始工作:");
-
-
-
+            ExecuteFn();
             return Task.CompletedTask;
         }
     }
