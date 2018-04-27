@@ -14,7 +14,7 @@ namespace background.Tools
     {
         public static StdSchedulerFactory factory;
         public static IScheduler scheduler;
-        public static async Task Init()
+        public static Task Init()
         {
             try
             {
@@ -24,10 +24,9 @@ namespace background.Tools
                     { "quartz.serializer.type", "binary" }
                 };
                 factory = new StdSchedulerFactory(props);
-                scheduler = await factory.GetScheduler();
+                scheduler = factory.GetScheduler().GetAwaiter().GetResult();
 
-                // 开启调度器
-                await scheduler.Start();
+                #region job
 
                 // 定义这个工作，并将其绑定到我们的IJob实现类
                 IJobDetail job = JobBuilder.Create<DataSaveJob>()
@@ -45,7 +44,11 @@ namespace background.Tools
                     .Build();
 
                 // 告诉Quartz使用我们的触发器来安排作业
-                await scheduler.ScheduleJob(job, trigger);
+                var task = scheduler.ScheduleJob(job, trigger);
+
+                #endregion
+
+                #region job2
 
                 // 定义这个工作，并将其绑定到我们的IJob实现类
                 IJobDetail job2 = JobBuilder.Create<CacheClearJob>()
@@ -59,17 +62,30 @@ namespace background.Tools
                    .Build();
 
                 // 告诉Quartz使用我们的触发器来安排作业
-                await scheduler.ScheduleJob(job2, trigger2);
+                var task2 = scheduler.ScheduleJob(job2, trigger2);
+
+                #endregion
 
                 // 等待60秒
                 // await Task.Delay(TimeSpan.FromSeconds(60));
 
                 // 关闭调度程序
                 // await scheduler.Shutdown();
+
+                #region 等待区
+
+                task.GetAwaiter().GetResult();
+                task2.GetAwaiter().GetResult();
+
+                #endregion
+
+                // 开启调度器
+                return scheduler.Start();
+
             }
             catch (SchedulerException se)
             {
-                await Console.Error.WriteLineAsync(se.ToString());
+                return Console.Error.WriteLineAsync(se.Message);
             }
         }
     }

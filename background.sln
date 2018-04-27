@@ -30,6 +30,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Senparc.Weixin.Open", "Libr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Senparc.Weixin.Open.Test", "Libraries\Senparc\Senparc.Weixin.Open\Senparc.Weixin.Open.Test\Senparc.Weixin.Open.Test.csproj", "{5AC215B9-85A1-42D6-A44E-1E1FC6BC7488}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleCore", "SimpleCore\SimpleCore.csproj", "{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -241,6 +243,24 @@ Global
 		{5AC215B9-85A1-42D6-A44E-1E1FC6BC7488}.Test|x64.Build.0 = Release|Any CPU
 		{5AC215B9-85A1-42D6-A44E-1E1FC6BC7488}.Test|x86.ActiveCfg = Release|Any CPU
 		{5AC215B9-85A1-42D6-A44E-1E1FC6BC7488}.Test|x86.Build.0 = Release|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Debug|x64.Build.0 = Debug|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Debug|x86.Build.0 = Debug|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Release|x64.ActiveCfg = Release|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Release|x64.Build.0 = Release|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Release|x86.ActiveCfg = Release|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Release|x86.Build.0 = Release|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Test|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Test|Any CPU.Build.0 = Debug|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Test|x64.ActiveCfg = Debug|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Test|x64.Build.0 = Debug|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Test|x86.ActiveCfg = Debug|Any CPU
+		{3F2BE356-2D8D-4ED4-8694-6FAC0DE40754}.Test|x86.Build.0 = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

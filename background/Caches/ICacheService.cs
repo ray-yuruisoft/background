@@ -224,7 +224,7 @@ namespace background.Caches
 
         #endregion
 
-        T GetOrCreate<T>(string key, TimeSpan expiresSliding, TimeSpan expiressAbsoulte, Func<T> factory) where T : class, new();
+        T GetOrCreate<T>(string key, DateTime expiresSliding, DateTime expiressAbsoulte, Func<T> factory) where T : class, new();
 
     }
 }

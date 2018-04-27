@@ -60,12 +60,12 @@ namespace background.Caches
     public class MemoryCacheService : ICacheService
     {
 
-        public T GetOrCreate<T>(string key, TimeSpan expiresSliding, TimeSpan expiressAbsoulte, Func<T> factory) where T : class, new()
+        public T GetOrCreate<T>(string key, DateTime expiresSliding, DateTime expiressAbsoulte, Func<T> factory) where T : class, new()
         {
             return _cache.GetOrCreate<T>(key, (ICacheEntry par) =>
             {
-                par.AbsoluteExpirationRelativeToNow = expiressAbsoulte;
-                par.SlidingExpiration = expiresSliding;
+                par.AbsoluteExpirationRelativeToNow = expiressAbsoulte - DateTime.Now;
+                par.SlidingExpiration = expiresSliding - DateTime.Now;
                 return factory();
             });
         }
@@ -420,13 +420,13 @@ namespace background.Caches
     public class RedisCacheService : ICacheService
     {
 
-        public T GetOrCreate<T>(string key, TimeSpan expiresSliding, TimeSpan expiressAbsoulte, Func<T> factory) where T : class, new()
+        public T GetOrCreate<T>(string key, DateTime expiresSliding, DateTime expiressAbsoulte, Func<T> factory) where T : class, new()
         {
             var value = Get<T>(key);
             if (value == default(T))
             {
                 value = factory();
-                if (Add(key, value, expiressAbsoulte))
+                if (Add(key, value, expiressAbsoulte - DateTime.Now))
                 {
                     return value;
                 }
