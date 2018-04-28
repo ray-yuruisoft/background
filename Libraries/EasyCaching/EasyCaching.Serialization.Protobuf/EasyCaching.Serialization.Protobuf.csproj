@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Owners>Catcher Wong</Owners>
+    <Authors>Catcher Wong</Authors>    
+    <Version>0.1.0</Version>
+    <Description>
+      EasyCaching.Serialization.Protobuf based on EasyCaching.Core and protobuf-net.
+    </Description>
+    <PackageTags>Caching,Serialization,Protobuf</PackageTags>
+    <PackageProjectUrl>https://github.com/dotnetcore/EasyCaching</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/dotnetcore/EasyCaching/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/dotnetcore/EasyCaching</RepositoryUrl>
+    <ProjectUrl>https://github.com/dotnetcore/EasyCaching</ProjectUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/dotnetcore/EasyCaching/master/media/nuget-icon.png</PackageIconUrl>
+    <PackageReleaseNotes>            
+      Init.
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EasyCaching.Core\EasyCaching.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="protobuf-net" Version="2.3.7" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.0.0" />
+  </ItemGroup>
+</Project>

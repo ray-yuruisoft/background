@@ -25,6 +25,7 @@
     <Folder Include="Models\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Libraries\EasyCaching\EasyCaching.InMemory\EasyCaching.InMemory.csproj" />
     <ProjectReference Include="..\Libraries\SOAP\CustomMiddleware\CustomMiddleware.csproj" />
   </ItemGroup>
   <ItemGroup>

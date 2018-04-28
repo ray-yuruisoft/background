@@ -1,4 +1,5 @@
 ﻿using background.Caches;
+using EasyCaching.InMemory;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -18,6 +19,7 @@ namespace background.InversionOfControl
             services
                 .AddSingleton<IMemoryCache>(new MemoryCache(new MemoryCacheOptions() { }))
                 .AddTransient<ICacheService, MemoryCacheService>()
+                .AddDefaultInMemoryCache()
                 ;
 
             //构建容器

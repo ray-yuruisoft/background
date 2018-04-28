@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Owners>Catcher Wong</Owners>
+    <Authors>Catcher Wong</Authors>    
+    <Version>0.2.1</Version>
+    <Description>
+      EasyCaching.Memcached based on EasyCaching.Core and EnyimMemcachedCore
+    </Description>
+    <PackageTags>Caching,Cache,Distributed,Memcached</PackageTags>
+    <PackageProjectUrl>https://github.com/dotnetcore/EasyCaching</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/dotnetcore/EasyCaching/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/dotnetcore/EasyCaching</RepositoryUrl>
+    <ProjectUrl>https://github.com/dotnetcore/EasyCaching</ProjectUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/dotnetcore/EasyCaching/master/media/nuget-icon.png</PackageIconUrl>
+    <PackageReleaseNotes>      
+      1. Implement FlushAsync.
+      2. Add a new ServiceCollectionExtension method.
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EasyCaching.Core\EasyCaching.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="EnyimMemcachedCore" Version="2.1.0.7" />
+  </ItemGroup>
+</Project>

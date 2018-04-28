@@ -39,3 +39,5 @@ Thumbs.db
 
 # dotCover
 *.dotCover
+/background/logfile
+/background/log-file.log

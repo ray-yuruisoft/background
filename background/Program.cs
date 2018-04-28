@@ -4,7 +4,9 @@ using System.Threading;
 using background.InversionOfControl;
 using background.Jobs;
 using background.Tools;
+using EasyCaching.Core;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace background
 {

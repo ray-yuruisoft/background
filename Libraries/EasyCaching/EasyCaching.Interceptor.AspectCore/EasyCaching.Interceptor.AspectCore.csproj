@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Owners>Catcher Wong</Owners>
+    <Authors>Catcher Wong</Authors>    
+    <Version>0.2.0</Version>
+    <Description>      
+      Caching Interceptor based on EasyCaching.Core and AspectCore
+    </Description>
+    <PackageTags>Caching,Cache,Distributed,Memory,Interceptor,Synchronization</PackageTags>
+    <PackageProjectUrl>https://github.com/dotnetcore/EasyCaching</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/dotnetcore/EasyCaching/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/dotnetcore/EasyCaching</RepositoryUrl>
+    <ProjectUrl>https://github.com/dotnetcore/EasyCaching</ProjectUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/dotnetcore/EasyCaching/master/media/nuget-icon.png</PackageIconUrl>
+    <PackageReleaseNotes>
+      Add some extension methods.
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EasyCaching.Core\EasyCaching.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="AspectCore.Core" Version="0.2.4" />
+    <PackageReference Include="AspectCore.Extensions.DependencyInjection" Version="0.2.4" />
+  </ItemGroup>
+</Project>

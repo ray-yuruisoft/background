@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <Owners>Catcher Wong</Owners>
+    <Authors>Catcher Wong</Authors>    
+    <Version>0.1.2</Version>
+    <Description>
+      EasyCaching.Serialization.MessagePack based on EasyCaching.Core and MessagePack.
+    </Description>
+    <PackageTags>Caching,Serialization,MessagePack</PackageTags>
+   <PackageProjectUrl>https://github.com/dotnetcore/EasyCaching</PackageProjectUrl>
+    <PackageLicenseUrl>https://github.com/dotnetcore/EasyCaching/blob/master/LICENSE</PackageLicenseUrl>
+    <RepositoryUrl>https://github.com/dotnetcore/EasyCaching</RepositoryUrl>
+    <ProjectUrl>https://github.com/dotnetcore/EasyCaching</ProjectUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/dotnetcore/EasyCaching/master/media/nuget-icon.png</PackageIconUrl>
+    <PackageReleaseNotes>
+      Fix bug of AddDefaultMessagePackSerializer.
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EasyCaching.Core\EasyCaching.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MessagePack" Version="1.7.3.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.0.0" />
+  </ItemGroup>
+</Project>
