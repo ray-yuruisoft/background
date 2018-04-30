@@ -12,7 +12,9 @@ namespace background.Tools
 {
     public class ConfigHelper
     {
-        private static ILog log = LogManager.GetLogger(LogHelper.repository.Name, typeof(ConfigHelper));
+        // private static ILog log = LogManager.GetLogger(LogHelper.repository.Name, typeof(ConfigHelper));
+
+        private static Logger log = new Logger("ConfigHelper");
         private static IConfigurationRoot config;
         /// <summary>
         /// 初始化

@@ -8,8 +8,8 @@ namespace background.Jobs
     public class DataSaveJob : Quartz.IJob
     {
 
-        private static readonly ILog log = LogManager.GetLogger(LogHelper.repository.Name, typeof(DataSaveJob));
-
+        //  private static readonly ILog log = LogManager.GetLogger(LogHelper.repository.Name, typeof(DataSaveJob));
+        private static readonly Logger log = new Logger("DataSaveJob");
         public static void ExecuteFn()
         {
             

@@ -2,35 +2,35 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.27428.2011
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "background", "background\background.csproj", "{D8E8A153-D6C8-40CD-AB9F-1F796C903EDD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "background", "background\background.csproj", "{D8E8A153-D6C8-40CD-AB9F-1F796C903EDD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Senparc", "Senparc", "{C6D6D87F-FD0A-437A-85FB-7B2700032D72}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SOAP", "SOAP", "{C8239D3C-E27F-47B7-8067-0AC452E2F2F0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CustomMiddleware", "Libraries\SOAP\CustomMiddleware\CustomMiddleware.csproj", "{9BC605A3-3EF0-4A3D-A491-D7EA9CDB447C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CustomMiddleware", "Libraries\SOAP\CustomMiddleware\CustomMiddleware.csproj", "{9BC605A3-3EF0-4A3D-A491-D7EA9CDB447C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SOAPService3", "Libraries\SOAP\SOAPService3\SOAPService3.csproj", "{0D960B09-E841-4557-B88A-8E260969D34C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SOAPService3", "Libraries\SOAP\SOAPService3\SOAPService3.csproj", "{0D960B09-E841-4557-B88A-8E260969D34C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SOAPClient2", "Libraries\SOAP\SOAPClient2\SOAPClient2.csproj", "{F4948874-753F-41E0-BBD0-1AEEDEAA2A23}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SOAPClient2", "Libraries\SOAP\SOAPClient2\SOAPClient2.csproj", "{F4948874-753F-41E0-BBD0-1AEEDEAA2A23}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Simple", "Simple\Simple.csproj", "{9AD46278-6691-4F6D-B16C-61ACD4072980}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Simple", "Simple\Simple.csproj", "{9AD46278-6691-4F6D-B16C-61ACD4072980}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EasyCaching", "EasyCaching", "{AE2F5010-C47D-4A49-AC9F-FE44FFCA7E39}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyCaching.InMemory", "Libraries\EasyCaching\EasyCaching.InMemory\EasyCaching.InMemory.csproj", "{794ABBBE-4E30-4AFA-AA37-0D6CEF2482BD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyCaching.InMemory", "Libraries\EasyCaching\EasyCaching.InMemory\EasyCaching.InMemory.csproj", "{794ABBBE-4E30-4AFA-AA37-0D6CEF2482BD}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EasyCaching.Core", "Libraries\EasyCaching\EasyCaching.Core\EasyCaching.Core.csproj", "{6462172C-C2F7-4339-A625-21A720F37062}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EasyCaching.Core", "Libraries\EasyCaching\EasyCaching.Core\EasyCaching.Core.csproj", "{6462172C-C2F7-4339-A625-21A720F37062}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DotnetSpider", "DotnetSpider", "{AD1372E6-997C-4DA6-9966-788802FA90DB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotnetSpider.Core", "Libraries\DotnetSpider\DotnetSpider.Core\DotnetSpider.Core.csproj", "{38132C17-BAA5-42B3-9CA2-FF67C1E91D6C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotnetSpider.Core", "Libraries\DotnetSpider\DotnetSpider.Core\DotnetSpider.Core.csproj", "{38132C17-BAA5-42B3-9CA2-FF67C1E91D6C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotnetSpider.HtmlAgilityPack", "Libraries\DotnetSpider\DotnetSpider.HtmlAgilityPack\DotnetSpider.HtmlAgilityPack.csproj", "{29407A3D-95C0-4AAF-AFD3-FCDAD0FCE74A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotnetSpider.HtmlAgilityPack", "Libraries\DotnetSpider\DotnetSpider.HtmlAgilityPack\DotnetSpider.HtmlAgilityPack.csproj", "{29407A3D-95C0-4AAF-AFD3-FCDAD0FCE74A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotnetSpider.Extension", "Libraries\DotnetSpider\DotnetSpider.Extension\DotnetSpider.Extension.csproj", "{8684F320-5B96-4392-9D81-F8EDAB1567B6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotnetSpider.Extension", "Libraries\DotnetSpider\DotnetSpider.Extension\DotnetSpider.Extension.csproj", "{8684F320-5B96-4392-9D81-F8EDAB1567B6}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Senparc.WebSocket", "Libraries\Senparc\Senparc.WebSocket\Senparc.WebSocket.csproj", "{95EF6B93-9641-4742-AA9B-5BC77BFFB6D4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Senparc.WebSocket", "Libraries\Senparc\Senparc.WebSocket\Senparc.WebSocket.csproj", "{95EF6B93-9641-4742-AA9B-5BC77BFFB6D4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Senparc.Weixin", "Libraries\Senparc\Senparc.Weixin\Senparc.Weixin.csproj", "{E8DAB79C-618C-4383-9770-4782BFE9272D}"
 EndProject
@@ -39,6 +39,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Senparc.Weixin.Open", "Libraries\Senparc\Senparc.Weixin.Open\Senparc.Weixin.Open.csproj", "{C0AF00E6-A5EA-4888-BA72-2CBF58FAF497}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Senparc.Weixin.WxOpen", "Libraries\Senparc\Senparc.Weixin.WxOpen\Senparc.Weixin.WxOpen.csproj", "{12158D32-B8CA-4732-B0FA-7A2EA53DA0B5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "spiders", "spiders\spiders.csproj", "{D6854A53-8639-45A5-9861-5A0D8D54FBF1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -323,6 +325,24 @@ Global
 		{12158D32-B8CA-4732-B0FA-7A2EA53DA0B5}.Test|x64.Build.0 = Debug|Any CPU
 		{12158D32-B8CA-4732-B0FA-7A2EA53DA0B5}.Test|x86.ActiveCfg = Debug|Any CPU
 		{12158D32-B8CA-4732-B0FA-7A2EA53DA0B5}.Test|x86.Build.0 = Debug|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Debug|x64.Build.0 = Debug|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Debug|x86.Build.0 = Debug|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Release|x64.ActiveCfg = Release|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Release|x64.Build.0 = Release|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Release|x86.ActiveCfg = Release|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Release|x86.Build.0 = Release|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Test|Any CPU.ActiveCfg = Release|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Test|Any CPU.Build.0 = Release|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Test|x64.ActiveCfg = Release|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Test|x64.Build.0 = Release|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Test|x86.ActiveCfg = Release|Any CPU
+		{D6854A53-8639-45A5-9861-5A0D8D54FBF1}.Test|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -11,7 +11,9 @@ namespace background.Tools
 {
    public class FileHelper
     {
-        private static ILog log = LogManager.GetLogger(LogHelper.repository.Name, typeof(FileHelper));
+        // private static ILog log = LogManager.GetLogger(LogHelper.repository.Name, typeof(FileHelper));
+
+        private static Logger log = new Logger("FileHelper");
         public static bool SaveBinaryToFile(object obj, string savePath)
         {
             if (string.IsNullOrWhiteSpace(savePath)) return false;
