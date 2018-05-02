@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Threading;
+using background.Data;
 using background.InversionOfControl;
 using background.Jobs;
 using background.Tools;

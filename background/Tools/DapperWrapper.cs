@@ -184,6 +184,10 @@ namespace DapperWrapper
         }
         public IEnumerable<T> SelectListPersistent(MySqlConnection context, string sqlstr = null, params object[] parameters)
         {
+            if (parameters.Count() == 0)
+            {
+                return context.Query<T>(SelectstringBuiler(sqlstr));
+            }
             return context.Query<T>(SelectstringBuiler(sqlstr), parameters);
         }
 

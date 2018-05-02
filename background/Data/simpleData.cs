@@ -8,7 +8,7 @@ namespace background.Data
         public simpleData()
         {
         }
-        public override string connectionString => "home_mjlog";
+        public override string connectionString => "office_localhost_mjlog";
         public override string tableName { get ; set ; }
     }
 }
