@@ -1,14 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
-using background.Data;
 using background.InversionOfControl;
 using background.Jobs;
 using background.Tools;
-using EasyCaching.Core;
+using DotnetSpider.Core;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.DependencyInjection;
+using Newtonsoft.Json;
 
 namespace background
 {
@@ -22,11 +23,6 @@ namespace background
             Console.WriteLine("程序开始运行");
 
             Init();
-
-            ThreadPool.QueueUserWorkItem(state =>{
-                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                DotnetSpider.Core.Startup.Run("-s:MultiSupplementSpider", "-tid:1", "-i:guid");
-            });
 
             string key = "";
             var run = true;
@@ -46,6 +42,16 @@ namespace background
         {
             Console.WriteLine("-- CTRL_CLOSE_EVENT --");
             DataSaveJob.ExecuteFn();
+
+            #region spider exit
+
+            foreach (var item in DotnetSpider.Core.Startup.spiders)
+            {
+                var temp = item as Spider;
+                temp.Exit();
+            }
+
+            #endregion
         }
 
         #region Init
@@ -73,7 +79,7 @@ namespace background
 
             //加载配置文件
             ConfigHelper.Init();
-            log.Info("配置文件加载完成".ToLine('='));
+            log.Info("配置文件加载完成".ToLine('=', 26));
 
             #region //WebHost
 
@@ -87,14 +93,31 @@ namespace background
                        .UseIISIntegration()
                        .UseStartup<Startup>()
                        .Build();
-                ThreadPool.QueueUserWorkItem(state =>{host.Run();});
+                ThreadPool.QueueUserWorkItem(state => { host.Run(); });
             }
 
             #endregion
 
             //作业调度器
-            SchedulerHelper.Init();
-            log.Info("作业调度器加载完成".ToLine('='));
+            // SchedulerHelper.Init();
+            // log.Info("作业调度器加载完成".ToLine('=', 26));
+
+            #region //Spider
+
+            var spiders = ConfigHelper.GetAppSettingsArray("SpiderStartup");
+            if(spiders.Length != 0)
+            {
+                ThreadPool.QueueUserWorkItem(state =>
+                {
+                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                    foreach (var item in spiders)
+                    {
+                        DotnetSpider.Core.Startup.Run(item.Split(";"));
+                    }
+                });
+            }
+
+            #endregion
 
         }
 

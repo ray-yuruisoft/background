@@ -44,7 +44,8 @@ namespace DotnetSpider.Extension.Model
 			ISelector selector = EntityDefine.SelectorAttribute.ToSelector();
 			if (selector != null && EntityDefine.Multi)
 			{
-				var list = page.Selectable.SelectList(selector).Nodes();
+
+                var list = page.Selectable.SelectList(selector).Nodes();
 				if (list == null || list.Count() == 0)
 				{
 					result = null;

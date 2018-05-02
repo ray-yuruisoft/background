@@ -26,6 +26,7 @@ namespace background.Tools
                 factory = new StdSchedulerFactory(props);
                 scheduler = factory.GetScheduler().GetAwaiter().GetResult();
 
+
                 #region job
 
                 // 定义这个工作，并将其绑定到我们的IJob实现类
@@ -66,6 +67,7 @@ namespace background.Tools
 
                 #endregion
 
+                
                 // 等待60秒
                 // await Task.Delay(TimeSpan.FromSeconds(60));
 

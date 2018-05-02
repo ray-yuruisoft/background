@@ -18,7 +18,7 @@ namespace background.Tools
             }
         }
 
-        public static string ToLine(this string source,char c)
+        public static string ToLine(this string source, char c, int extracut = 0)
         {
             var width = 120;
             try
@@ -29,39 +29,39 @@ namespace background.Tools
             {
                 // ignore
             }
-            var len = width - source.Length-10;
-            if(len>0)
+            var len = width - source.Length - extracut;
+            if (len > 0)
             {
-              return source.PadRight(len, c);
+                return source.PadRight(len, c);
             }
             return source;
         }
 
 
-    /// <summary>
-    /// 打印一整行word到控制台中
-    /// </summary>
-    /// <param name="word">打印的字符</param>
-    public static void PrintLine(char word = '=')
-    {
-        var width = 120;
+        /// <summary>
+        /// 打印一整行word到控制台中
+        /// </summary>
+        /// <param name="word">打印的字符</param>
+        public static void PrintLine(char word = '=')
+        {
+            var width = 120;
 
-        try
-        {
-            width = Console.WindowWidth;
-        }
-        catch
-        {
-            // ignore
-        }
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < width; ++i)
-        {
-            builder.Append(word);
-        }
+            try
+            {
+                width = Console.WindowWidth;
+            }
+            catch
+            {
+                // ignore
+            }
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < width; ++i)
+            {
+                builder.Append(word);
+            }
 
-        Console.Write(builder.ToString());
-    }
+            Console.Write(builder.ToString());
+        }
 
     }
 }

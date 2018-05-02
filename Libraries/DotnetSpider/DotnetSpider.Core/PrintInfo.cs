@@ -61,7 +61,7 @@ namespace DotnetSpider.Core
 				builder.Append(word);
 			}
 
-			Console.Write(builder.ToString());
+			Console.Write(builder.ToString()+"\r\n");
 		}
 	}
 }

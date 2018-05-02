@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using DotnetSpider.Core.Infrastructure;
+using System.Collections.Concurrent;
 #if !NET45
 using Microsoft.Extensions.DependencyModel;
 using System.Runtime.InteropServices;
@@ -18,10 +19,13 @@ namespace DotnetSpider.Core
 	/// </summary>
 	public static class Startup
 	{
-		/// <summary>
-		/// DLL名字中包含任意一个即是需要扫描的DLL
-		/// </summary>
-		public static List<string> DetectNames = new List<string> { "dotnetspider.sample", "crawler", "crawlers", "spider", "spiders" };
+
+        public static ConcurrentQueue<object> spiders = new ConcurrentQueue<object>();
+
+        /// <summary>
+        /// DLL名字中包含任意一个即是需要扫描的DLL
+        /// </summary>
+        public static List<string> DetectNames = new List<string> { "dotnetspider.sample", "crawler", "crawlers", "spider", "spiders" };
 
 		/// <summary>
 		/// 运行
@@ -56,7 +60,9 @@ namespace DotnetSpider.Core
 			{
 				PrintInfo.PrintLine();
 
-				var runMethod = spiderTypes[spiderName].GetMethod("Run");
+                spiders.Enqueue(spider);
+
+                var runMethod = spiderTypes[spiderName].GetMethod("Run");
 
 				if (!arguments.ContainsKey("-a"))
 				{
@@ -68,7 +74,7 @@ namespace DotnetSpider.Core
 					runMethod.Invoke(spider, new object[] { parameters });
 				}
 			}
-		}
+        }
 
 		/// <summary>
 		/// 加载环境变量

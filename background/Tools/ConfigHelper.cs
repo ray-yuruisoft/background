@@ -1,18 +1,14 @@
-﻿using log4net;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.Json;
+﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
+using System.Linq;
 
 namespace background.Tools
 {
     public class ConfigHelper
     {
-        // private static ILog log = LogManager.GetLogger(LogHelper.repository.Name, typeof(ConfigHelper));
 
         private static Logger log = new Logger("ConfigHelper");
         private static IConfigurationRoot config;
@@ -26,7 +22,7 @@ namespace background.Tools
                 .AddInMemoryCollection()                 //将配置文件的数据加载到内存中
                                            .SetBasePath(basePath)   //指定配置文件所在的目录
                                            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)  //指定加载的配置文件
-                                           .Build();    //编译成对象  
+           .Build();    //编译成对象  
 
             Action changeCallBack = () =>
             {
@@ -42,7 +38,7 @@ namespace background.Tools
         /// </summary>
         public static void LoadDataManager()
         {
-            
+
         }
 
         /// <summary>
@@ -80,5 +76,44 @@ namespace background.Tools
                 log.Error("SetAppSettings:" + ex.Message);
             }
         }
+
+
+        private static void TwoDimensional(IConfiguration c, Dictionary<string, string> dic)
+        {
+            foreach (var section in c.GetChildren())
+            {
+                if (section.GetChildren().Any())
+                    TwoDimensional(section, dic);
+                else
+                {
+                    dic.Add(section.Path, section.Value);
+                }
+            }
+        }
+        public static Dictionary<string, string> GetTwoDimensional()
+        {
+            Dictionary<string, string> dic = new Dictionary<string, string>();
+            TwoDimensional(config, dic);
+            return dic;
+        }
+        public static string[] GetAppSettingsArray(string path)
+        {
+            var dic = GetTwoDimensional();
+            List<string> list = new List<string>();
+            foreach (var item in dic)
+            {
+                if (item.Key.IndexOf(path) != -1)
+                {
+                    var t = item.Key.Split(":");
+                    if (int.TryParse(t[t.Length - 1], out int res))
+                    {
+                        list.Add(item.Value);
+                    }
+                }
+            }
+            return list.ToArray();
+        }
+
+
     }
 }
