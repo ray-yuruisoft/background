@@ -8,7 +8,9 @@ namespace background.Jobs
     public class CacheClearJob : Quartz.IJob
     {
 
-        private static readonly ILog log = LogManager.GetLogger(LogHelper.repository.Name, typeof(CacheClearJob));
+        //private static readonly ILog log = LogManager.GetLogger(LogHelper.repository.Name, typeof(CacheClearJob));
+        private static readonly Logger log = new Logger("CacheClearJob");
+
         /// <summary>
         /// 执行
         /// </summary>

@@ -417,419 +417,419 @@ namespace background.Caches
     /// <summary>
     /// 注意：我翻阅了很多资料，没有找到Redis支持滑动和绝对过期，但是都是继承的统一接口，所以这里添加方法 滑动过期时没有用的
     /// </summary>
-    public class RedisCacheService : ICacheService
-    {
+    //public class RedisCacheService : ICacheService
+    //{
 
-        public T GetOrCreate<T>(string key, DateTime expiresSliding, DateTime expiressAbsoulte, Func<T> factory) where T : class, new()
-        {
-            var value = Get<T>(key);
-            if (value == default(T))
-            {
-                value = factory();
-                if (Add(key, value, expiressAbsoulte - DateTime.Now))
-                {
-                    return value;
-                }
-                return default(T);
-            }
-            return value;
-        }
+    //    public T GetOrCreate<T>(string key, DateTime expiresSliding, DateTime expiressAbsoulte, Func<T> factory) where T : class, new()
+    //    {
+    //        var value = Get<T>(key);
+    //        if (value == default(T))
+    //        {
+    //            value = factory();
+    //            if (Add(key, value, expiressAbsoulte - DateTime.Now))
+    //            {
+    //                return value;
+    //            }
+    //            return default(T);
+    //        }
+    //        return value;
+    //    }
 
-        public void Dispose()
-        {
-            if (_connection != null)
-                _connection.Dispose();
-            GC.SuppressFinalize(this);
-        }
+    //    public void Dispose()
+    //    {
+    //        if (_connection != null)
+    //            _connection.Dispose();
+    //        GC.SuppressFinalize(this);
+    //    }
 
-        protected IDatabase _cache;
+    //    protected IDatabase _cache;
 
-        private ConnectionMultiplexer _connection;
+    //    private ConnectionMultiplexer _connection;
 
-        private readonly string _instance;
+    //    private readonly string _instance;
 
-        public RedisCacheService(RedisCacheOptions options, int database = 0)
-        {
-            _connection = ConnectionMultiplexer.Connect(options.Configuration);
-            _cache = _connection.GetDatabase(database);
-            _instance = options.InstanceName;
-        }
+    //    public RedisCacheService(RedisCacheOptions options, int database = 0)
+    //    {
+    //        _connection = ConnectionMultiplexer.Connect(options.Configuration);
+    //        _cache = _connection.GetDatabase(database);
+    //        _instance = options.InstanceName;
+    //    }
 
-        public string GetKeyForRedis(string key)
-        {
-            return _instance + key;
-        }
+    //    public string GetKeyForRedis(string key)
+    //    {
+    //        return _instance + key;
+    //    }
 
-        #region 验证缓存项是否存在
+    //    #region 验证缓存项是否存在
 
-        /// <summary>
-        /// 验证缓存项是否存在
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <returns></returns>
-        public bool Exists(string key)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-            return _cache.KeyExists(GetKeyForRedis(key));
-        }
+    //    /// <summary>
+    //    /// 验证缓存项是否存在
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <returns></returns>
+    //    public bool Exists(string key)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+    //        return _cache.KeyExists(GetKeyForRedis(key));
+    //    }
 
-        public Task<bool> ExistsAsync(string key)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-            return _cache.KeyExistsAsync(GetKeyForRedis(key));
-        }
+    //    public Task<bool> ExistsAsync(string key)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+    //        return _cache.KeyExistsAsync(GetKeyForRedis(key));
+    //    }
 
-        #endregion
+    //    #endregion
 
-        #region 添加缓存
+    //    #region 添加缓存
 
-        /// <summary>
-        /// 添加缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <param name="value">缓存Value</param>
-        /// <returns></returns>
-        public bool Add(string key, object value)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-            return _cache.StringSet(GetKeyForRedis(key), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value)));
-        }
-        /// <summary>
-        /// 添加缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <param name="value">缓存Value</param>
-        /// <param name="expiresSliding">滑动过期时长（如果在过期时间内有操作，则以当前时间点延长过期时间,Redis中无效）</param>
-        /// <param name="expiressAbsoulte">绝对过期时长</param>
-        /// <returns></returns>
-        public bool Add(string key, object value, TimeSpan expiresSliding, TimeSpan expiressAbsoulte)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-            return _cache.StringSet(GetKeyForRedis(key), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value)), expiressAbsoulte);
-        }
-        /// <summary>
-        /// 添加缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <param name="value">缓存Value</param>
-        /// <param name="expiresIn">缓存时长</param>
-        /// <param name="isSliding">是否滑动过期（如果在过期时间内有操作，则以当前时间点延长过期时间,Redis中无效）</param>
-        /// <returns></returns>
-        public bool Add(string key, object value, TimeSpan expiresIn, bool isSliding = false)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-
-            return _cache.StringSet(GetKeyForRedis(key), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value)), expiresIn);
-        }
+    //    /// <summary>
+    //    /// 添加缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <param name="value">缓存Value</param>
+    //    /// <returns></returns>
+    //    public bool Add(string key, object value)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+    //        return _cache.StringSet(GetKeyForRedis(key), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value)));
+    //    }
+    //    /// <summary>
+    //    /// 添加缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <param name="value">缓存Value</param>
+    //    /// <param name="expiresSliding">滑动过期时长（如果在过期时间内有操作，则以当前时间点延长过期时间,Redis中无效）</param>
+    //    /// <param name="expiressAbsoulte">绝对过期时长</param>
+    //    /// <returns></returns>
+    //    public bool Add(string key, object value, TimeSpan expiresSliding, TimeSpan expiressAbsoulte)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+    //        return _cache.StringSet(GetKeyForRedis(key), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value)), expiressAbsoulte);
+    //    }
+    //    /// <summary>
+    //    /// 添加缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <param name="value">缓存Value</param>
+    //    /// <param name="expiresIn">缓存时长</param>
+    //    /// <param name="isSliding">是否滑动过期（如果在过期时间内有操作，则以当前时间点延长过期时间,Redis中无效）</param>
+    //    /// <returns></returns>
+    //    public bool Add(string key, object value, TimeSpan expiresIn, bool isSliding = false)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
 
 
-
-        /// <summary>
-        /// 添加缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <param name="value">缓存Value</param>
-        /// <returns></returns>
-        public Task<bool> AddAsync(string key, object value)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-            return _cache.StringSetAsync(GetKeyForRedis(key), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value)));
-        }
-        /// <summary>
-        /// 添加缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <param name="value">缓存Value</param>
-        /// <param name="expiresSliding">滑动过期时长（如果在过期时间内有操作，则以当前时间点延长过期时间,Redis中无效）</param>
-        /// <param name="expiressAbsoulte">绝对过期时长</param>
-        /// <returns></returns>
-        public Task<bool> AddAsync(string key, object value, TimeSpan expiresSliding, TimeSpan expiressAbsoulte)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-            return _cache.StringSetAsync(GetKeyForRedis(key), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value)), expiressAbsoulte);
-        }
-        /// <summary>
-        /// 添加缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <param name="value">缓存Value</param>
-        /// <param name="expiresIn">缓存时长</param>
-        /// <param name="isSliding">是否滑动过期（如果在过期时间内有操作，则以当前时间点延长过期时间,Redis中无效）</param>
-        /// <returns></returns>
-        public Task<bool> AddAsync(string key, object value, TimeSpan expiresIn, bool isSliding = false)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-
-            return _cache.StringSetAsync(GetKeyForRedis(key), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value)), expiresIn);
-        }
+    //        return _cache.StringSet(GetKeyForRedis(key), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value)), expiresIn);
+    //    }
 
 
 
-        #endregion
-
-        #region 删除缓存
-
-        /// <summary>
-        /// 删除缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <returns></returns>
-        public bool Remove(string key)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-            return _cache.KeyDelete(GetKeyForRedis(key));
-        }
-        /// <summary>
-        /// 批量删除缓存
-        /// </summary>
-        /// <param name="key">缓存Key集合</param>
-        /// <returns></returns>
-        public void RemoveAll(IEnumerable<string> keys)
-        {
-            if (keys == null)
-            {
-                throw new ArgumentNullException(nameof(keys));
-            }
-
-            keys.ToList().ForEach(item => Remove(item));
-        }
-
-        /// <summary>
-        /// 删除缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <returns></returns>
-        public Task<bool> RemoveAsync(string key)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-            return _cache.KeyDeleteAsync(GetKeyForRedis(key));
-        }
-        /// <summary>
-        /// 批量删除缓存
-        /// </summary>
-        /// <param name="key">缓存Key集合</param>
-        /// <returns></returns>
-        public Task RemoveAllAsync(IEnumerable<string> keys)
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                RemoveAll(keys);
-            });
-        }
-
-        #endregion
-
-        #region 获取缓存
-
-        /// <summary>
-        /// 获取缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <returns></returns>
-        public T Get<T>(string key) where T : class
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            var value = _cache.StringGet(GetKeyForRedis(key));
-
-            if (!value.HasValue)
-            {
-                return default(T);
-            }
-
-            return JsonConvert.DeserializeObject<T>(value);
-        }
-        /// <summary>
-        /// 获取缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <returns></returns>
-        public object Get(string key)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            var value = _cache.StringGet(GetKeyForRedis(key));
-
-            if (!value.HasValue)
-            {
-                return null;
-            }
-            return JsonConvert.DeserializeObject(value);
-
-        }
-        /// <summary>
-        /// 获取缓存集合
-        /// </summary>
-        /// <param name="keys">缓存Key集合</param>
-        /// <returns></returns>
-        public IDictionary<string, object> GetAll(IEnumerable<string> keys)
-        {
-            if (keys == null)
-            {
-                throw new ArgumentNullException(nameof(keys));
-            }
-            var dict = new Dictionary<string, object>();
-
-            keys.ToList().ForEach(item => dict.Add(item, Get(GetKeyForRedis(item))));
-
-            return dict;
-        }
-
-        public Task<T> GetAsync<T>(string key) where T : class
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                return Get<T>(key);
-            });
-        }
-
-        public Task<object> GetAsync(string key)
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                return Get(key);
-            });
-        }
-
-        public Task<IDictionary<string, object>> GetAllAsync(IEnumerable<string> keys)
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                return GetAll(keys);
-            });
-        }
-
-        #endregion
-
-        #region 修改缓存
-
-        /// <summary>
-        /// 修改缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <param name="value">新的缓存Value</param>
-        /// <returns></returns>
-        public bool Replace(string key, object value)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            if (Exists(key))
-                if (!Remove(key))
-                    return false;
-
-            return Add(key, value);
-
-        }
-        /// <summary>
-        /// 修改缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <param name="value">新的缓存Value</param>
-        /// <param name="expiresSliding">滑动过期时长（如果在过期时间内有操作，则以当前时间点延长过期时间）</param>
-        /// <param name="expiressAbsoulte">绝对过期时长</param>
-        /// <returns></returns>
-        public bool Replace(string key, object value, TimeSpan expiresSliding, TimeSpan expiressAbsoulte)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            if (Exists(key))
-                if (!Remove(key))
-                    return false;
-
-            return Add(key, value, expiresSliding, expiressAbsoulte);
-        }
-        /// <summary>
-        /// 修改缓存
-        /// </summary>
-        /// <param name="key">缓存Key</param>
-        /// <param name="value">新的缓存Value</param>
-        /// <param name="expiresIn">缓存时长</param>
-        /// <param name="isSliding">是否滑动过期（如果在过期时间内有操作，则以当前时间点延长过期时间）</param>
-        /// <returns></returns>
-        public bool Replace(string key, object value, TimeSpan expiresIn, bool isSliding = false)
-        {
-            if (key == null)
-            {
-                throw new ArgumentNullException(nameof(key));
-            }
-
-            if (Exists(key))
-                if (!Remove(key)) return false;
-
-            return Add(key, value, expiresIn, isSliding);
-        }
+    //    /// <summary>
+    //    /// 添加缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <param name="value">缓存Value</param>
+    //    /// <returns></returns>
+    //    public Task<bool> AddAsync(string key, object value)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+    //        return _cache.StringSetAsync(GetKeyForRedis(key), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value)));
+    //    }
+    //    /// <summary>
+    //    /// 添加缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <param name="value">缓存Value</param>
+    //    /// <param name="expiresSliding">滑动过期时长（如果在过期时间内有操作，则以当前时间点延长过期时间,Redis中无效）</param>
+    //    /// <param name="expiressAbsoulte">绝对过期时长</param>
+    //    /// <returns></returns>
+    //    public Task<bool> AddAsync(string key, object value, TimeSpan expiresSliding, TimeSpan expiressAbsoulte)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+    //        return _cache.StringSetAsync(GetKeyForRedis(key), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value)), expiressAbsoulte);
+    //    }
+    //    /// <summary>
+    //    /// 添加缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <param name="value">缓存Value</param>
+    //    /// <param name="expiresIn">缓存时长</param>
+    //    /// <param name="isSliding">是否滑动过期（如果在过期时间内有操作，则以当前时间点延长过期时间,Redis中无效）</param>
+    //    /// <returns></returns>
+    //    public Task<bool> AddAsync(string key, object value, TimeSpan expiresIn, bool isSliding = false)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
 
 
-        public Task<bool> ReplaceAsync(string key, object value)
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                return Replace(key, value);
-            });
-        }
+    //        return _cache.StringSetAsync(GetKeyForRedis(key), Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(value)), expiresIn);
+    //    }
 
-        public Task<bool> ReplaceAsync(string key, object value, TimeSpan expiresSliding, TimeSpan expiressAbsoulte)
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                return Replace(key, value, expiresSliding, expiressAbsoulte);
-            });
-        }
 
-        public Task<bool> ReplaceAsync(string key, object value, TimeSpan expiresIn, bool isSliding = false)
-        {
-            return Task.Factory.StartNew(() =>
-            {
-                return Replace(key, value, expiresIn, isSliding);
-            });
-        }
 
-        #endregion
+    //    #endregion
 
-    }
+    //    #region 删除缓存
+
+    //    /// <summary>
+    //    /// 删除缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <returns></returns>
+    //    public bool Remove(string key)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+    //        return _cache.KeyDelete(GetKeyForRedis(key));
+    //    }
+    //    /// <summary>
+    //    /// 批量删除缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key集合</param>
+    //    /// <returns></returns>
+    //    public void RemoveAll(IEnumerable<string> keys)
+    //    {
+    //        if (keys == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(keys));
+    //        }
+
+    //        keys.ToList().ForEach(item => Remove(item));
+    //    }
+
+    //    /// <summary>
+    //    /// 删除缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <returns></returns>
+    //    public Task<bool> RemoveAsync(string key)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+    //        return _cache.KeyDeleteAsync(GetKeyForRedis(key));
+    //    }
+    //    /// <summary>
+    //    /// 批量删除缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key集合</param>
+    //    /// <returns></returns>
+    //    public Task RemoveAllAsync(IEnumerable<string> keys)
+    //    {
+    //        return Task.Factory.StartNew(() =>
+    //        {
+    //            RemoveAll(keys);
+    //        });
+    //    }
+
+    //    #endregion
+
+    //    #region 获取缓存
+
+    //    /// <summary>
+    //    /// 获取缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <returns></returns>
+    //    public T Get<T>(string key) where T : class
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+
+    //        var value = _cache.StringGet(GetKeyForRedis(key));
+
+    //        if (!value.HasValue)
+    //        {
+    //            return default(T);
+    //        }
+
+    //        return JsonConvert.DeserializeObject<T>(value);
+    //    }
+    //    /// <summary>
+    //    /// 获取缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <returns></returns>
+    //    public object Get(string key)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+
+    //        var value = _cache.StringGet(GetKeyForRedis(key));
+
+    //        if (!value.HasValue)
+    //        {
+    //            return null;
+    //        }
+    //        return JsonConvert.DeserializeObject(value);
+
+    //    }
+    //    /// <summary>
+    //    /// 获取缓存集合
+    //    /// </summary>
+    //    /// <param name="keys">缓存Key集合</param>
+    //    /// <returns></returns>
+    //    public IDictionary<string, object> GetAll(IEnumerable<string> keys)
+    //    {
+    //        if (keys == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(keys));
+    //        }
+    //        var dict = new Dictionary<string, object>();
+
+    //        keys.ToList().ForEach(item => dict.Add(item, Get(GetKeyForRedis(item))));
+
+    //        return dict;
+    //    }
+
+    //    public Task<T> GetAsync<T>(string key) where T : class
+    //    {
+    //        return Task.Factory.StartNew(() =>
+    //        {
+    //            return Get<T>(key);
+    //        });
+    //    }
+
+    //    public Task<object> GetAsync(string key)
+    //    {
+    //        return Task.Factory.StartNew(() =>
+    //        {
+    //            return Get(key);
+    //        });
+    //    }
+
+    //    public Task<IDictionary<string, object>> GetAllAsync(IEnumerable<string> keys)
+    //    {
+    //        return Task.Factory.StartNew(() =>
+    //        {
+    //            return GetAll(keys);
+    //        });
+    //    }
+
+    //    #endregion
+
+    //    #region 修改缓存
+
+    //    /// <summary>
+    //    /// 修改缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <param name="value">新的缓存Value</param>
+    //    /// <returns></returns>
+    //    public bool Replace(string key, object value)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+
+    //        if (Exists(key))
+    //            if (!Remove(key))
+    //                return false;
+
+    //        return Add(key, value);
+
+    //    }
+    //    /// <summary>
+    //    /// 修改缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <param name="value">新的缓存Value</param>
+    //    /// <param name="expiresSliding">滑动过期时长（如果在过期时间内有操作，则以当前时间点延长过期时间）</param>
+    //    /// <param name="expiressAbsoulte">绝对过期时长</param>
+    //    /// <returns></returns>
+    //    public bool Replace(string key, object value, TimeSpan expiresSliding, TimeSpan expiressAbsoulte)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+
+    //        if (Exists(key))
+    //            if (!Remove(key))
+    //                return false;
+
+    //        return Add(key, value, expiresSliding, expiressAbsoulte);
+    //    }
+    //    /// <summary>
+    //    /// 修改缓存
+    //    /// </summary>
+    //    /// <param name="key">缓存Key</param>
+    //    /// <param name="value">新的缓存Value</param>
+    //    /// <param name="expiresIn">缓存时长</param>
+    //    /// <param name="isSliding">是否滑动过期（如果在过期时间内有操作，则以当前时间点延长过期时间）</param>
+    //    /// <returns></returns>
+    //    public bool Replace(string key, object value, TimeSpan expiresIn, bool isSliding = false)
+    //    {
+    //        if (key == null)
+    //        {
+    //            throw new ArgumentNullException(nameof(key));
+    //        }
+
+    //        if (Exists(key))
+    //            if (!Remove(key)) return false;
+
+    //        return Add(key, value, expiresIn, isSliding);
+    //    }
+
+
+    //    public Task<bool> ReplaceAsync(string key, object value)
+    //    {
+    //        return Task.Factory.StartNew(() =>
+    //        {
+    //            return Replace(key, value);
+    //        });
+    //    }
+
+    //    public Task<bool> ReplaceAsync(string key, object value, TimeSpan expiresSliding, TimeSpan expiressAbsoulte)
+    //    {
+    //        return Task.Factory.StartNew(() =>
+    //        {
+    //            return Replace(key, value, expiresSliding, expiressAbsoulte);
+    //        });
+    //    }
+
+    //    public Task<bool> ReplaceAsync(string key, object value, TimeSpan expiresIn, bool isSliding = false)
+    //    {
+    //        return Task.Factory.StartNew(() =>
+    //        {
+    //            return Replace(key, value, expiresIn, isSliding);
+    //        });
+    //    }
+
+    //    #endregion
+
+    //}
 
 }

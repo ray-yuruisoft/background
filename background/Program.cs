@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Threading;
 using background.Data;
 using background.InversionOfControl;
@@ -14,13 +15,19 @@ namespace background
     class Program
     {
 
-        private static log4net.ILog log = log4net.LogManager.GetLogger(LogHelper.repository.Name, typeof(Program));
+        private static Logger log = new Logger("Program");
         public static IServiceProvider serviceProvider;
-
         static void Main(string[] args)
         {
             Console.WriteLine("程序开始运行");
+
             Init();
+
+            ThreadPool.QueueUserWorkItem(state =>{
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                DotnetSpider.Core.Startup.Run("-s:MultiSupplementSpider", "-tid:1", "-i:guid");
+            });
+
             string key = "";
             var run = true;
             while (run)
@@ -64,13 +71,9 @@ namespace background
             //容器初始化
             ProgramContainer.Init();
 
-            //加载log4日志组件
-            LogHelper.Init();
-            log.Info("日志加载完成".ToSameLength(40, '-'));
-
             //加载配置文件
             ConfigHelper.Init();
-            log.Info("配置文件加载完成".ToSameLength(40, '-'));
+            log.Info("配置文件加载完成".ToLine('='));
 
             #region //WebHost
 
@@ -84,18 +87,14 @@ namespace background
                        .UseIISIntegration()
                        .UseStartup<Startup>()
                        .Build();
-                ThreadPool.QueueUserWorkItem(
-                            state =>
-                            {
-                                host.Run();
-                            });
+                ThreadPool.QueueUserWorkItem(state =>{host.Run();});
             }
 
             #endregion
 
             //作业调度器
             SchedulerHelper.Init();
-            log.Info("作业调度器开始加载".ToSameLength(40, '-'));
+            log.Info("作业调度器加载完成".ToLine('='));
 
         }
 
