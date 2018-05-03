@@ -4,7 +4,9 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace SimpleCore
 {
@@ -13,23 +15,15 @@ namespace SimpleCore
         static void Main(string[] args)
         {
 
-            string xml = 
-                @"<?xml version=""1.0"" encoding=""ISO - 8859 - 1"" ?>" +
-                 "<bookstore>" +
-                     "<book>" +
-                        @"<title lang = ""eng""> Harry Potter </title>" +
-                        "<price> 29.99 </price>" +
-                     "</book>" +
-                     "<book>" +
-                        @"<title lang = ""eng""> Learning XML </title>" +
-                        "<price> 39.95 </price>" +
-                     "</book>" +
-                 "</bookstore> ";
+
+            var path = Directory.GetCurrentDirectory() + @"\test.html";
+
+            string xml = File.ReadAllText(path, Encoding.UTF8);
 
             HtmlDocument document = new HtmlDocument { OptionAutoCloseOnEnd = true };
             document.LoadHtml(xml);
             HtmlNode htmlNode = document.DocumentNode;
-            var nodes = htmlNode.SelectNodes("//title//price");
+            var nodes = htmlNode.SelectNodes(@"//li[@class=' j_thread_list clearfix']");
 
 
 
