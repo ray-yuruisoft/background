@@ -5,6 +5,7 @@ using DotnetSpider.Core.Selector;
 using DotnetSpider.Extension;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace spiders
@@ -15,11 +16,12 @@ namespace spiders
     {
         protected override void MyInit(params string[] arguments)
         {
-            Identity = Identity ?? "baidu tieba";
+            Identity = "baidu tieba";
             AddStartUrl("https://tieba.baidu.com/f?kw=%E5%A6%96%E7%B2%BE%E7%9A%84%E5%B0%BE%E5%B7%B4&ie=utf-8&pn=0");
             AddPipeline(new baidutiebaPipeline());
             AddPageProcessor(new baidutiebaPageProcessor());
             this.Site.DownloadFiles = true;
+            this.SkipTargetUrlsWhenResultIsEmpty = false;
         }
     }
 
@@ -27,7 +29,15 @@ namespace spiders
     {
         public override void Process(IEnumerable<ResultItems> resultItems, ISpider spider)
         {
-
+            foreach (var item in resultItems)
+            {
+                foreach (var bottom in item.Results["img"])
+                {
+                    var intervalPath = new Uri(bottom).LocalPath.Replace("//", "/").Replace("/", Env.PathSeperator);
+                    string filePath = $"{Path.Combine(Env.BaseDirectory, "download")}{Env.PathSeperator}{spider.Identity}{intervalPath}";
+                    string relativePath = $"{Env.PathSeperator}{spider.Identity}{intervalPath}";
+                }
+            }
         }
     }
 
@@ -66,9 +76,9 @@ namespace spiders
                 targetlinks.Add(element.Links().GetValue());
             }
 
-            page.AddTargetRequest("https://tieba.baidu.com/p/5634130238");
-            //page.AddTargetRequests(targetlinks);
-            page.AddResultItem("targetlinks", targetlinks);
+            //page.AddTargetRequest("https://tieba.baidu.com/p/5634130238");
+            page.AddTargetRequests(targetlinks);
+            //page.AddResultItem("targetlinks", targetlinks);
 
             #endregion
         }
