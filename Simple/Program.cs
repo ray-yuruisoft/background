@@ -23,8 +23,12 @@ namespace SimpleCore
             HtmlDocument document = new HtmlDocument { OptionAutoCloseOnEnd = true };
             document.LoadHtml(xml);
             HtmlNode htmlNode = document.DocumentNode;
-            var nodes = htmlNode.SelectNodes(@"//li[@class=' j_thread_list clearfix']");
+            var nodes = htmlNode.SelectSingleNode("//*[@id='pb_content']/div[@class='left_section']");//实体
 
+            var nodes2 = htmlNode.SelectSingleNode("//*[@id='pb_content']/div[@class='left_section']//h3/@title");//标题
+
+            var nodes3 = htmlNode.SelectSingleNode("//*[@id='pb_content']/div[@class='left_section']//a[@class='p_author_name j_user_card'][last()]/text()");//作者
+            
 
 
             Console.ReadKey();
