@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace GatherAgentService2.Tool
+namespace spiders
 {
     public class EmojiUtil
     {

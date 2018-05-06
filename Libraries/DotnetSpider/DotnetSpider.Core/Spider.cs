@@ -1080,7 +1080,7 @@ namespace DotnetSpider.Core
 				Logger.Log(Identity, $"Extract {request.Url} failed, please check your pipeline: {e}.", Level.Error, e);
 			}
 
-			if (page == null)
+            if (page == null || page.Skip)
 			{
 				return;
 			}
@@ -1117,7 +1117,7 @@ namespace DotnetSpider.Core
 								RetryTimes.Inc();
 								ExtractAndAddRequests(page);
 							}
-							Logger.Log(Identity, $"Download {request.Url} success, retry becuase extract 0 result.", Level.Warn);
+                            Logger.Log(Identity, $"Download {request.Url} success, retry becuase extract 0 result.", Level.Warn);
 						}
 						else
 						{

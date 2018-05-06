@@ -48,7 +48,12 @@ namespace background
             foreach (var item in DotnetSpider.Core.Startup.spiders)
             {
                 var temp = item as Spider;
-                temp.Exit();
+                if(temp.Stat == Status.Init 
+                   || temp.Stat == Status.Paused
+                   || temp.Stat == Status.Running
+                  ){
+                    temp.Exit();
+                }
             }
 
             #endregion

@@ -43,5 +43,17 @@ namespace DotnetSpider.Core.Infrastructure
 			var result = Cached.ContainsKey(key) ? Cached[key] : null;
 			return result;
 		}
+
+        /// <summary>
+        /// Remove the specified key.
+        /// </summary>
+        /// <returns>The remove.</returns>
+        /// <param name="key">Key.</param>
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public bool Remove(string key)
+        {
+            return Cached.Remove(key);
+        }
+
 	}
 }
