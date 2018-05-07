@@ -130,6 +130,12 @@ namespace spiders
 
                 response = NetworkCenter.Current.Execute("http", () => httpClientItem.Client.SendAsync(httpMessage).Result);
                 request.StatusCode = response.StatusCode;
+
+                if (response.StatusCode == HttpStatusCode.Moved)
+                {
+                    request.Url = response.Headers.Location.ToString();
+                }
+
                 response.EnsureSuccessStatusCode();
 
                 Page page;
@@ -298,10 +304,11 @@ namespace spiders
         {
 
             string intervalPath = null;
-            if(_customintervalPath)
+            if (_customintervalPath)
             {
                 intervalPath = $"{Env.PathSeperator}{DateTime.Now.ToString("yyyy_MM_dd")}{Env.PathSeperator}{new Uri(request.Url).LocalPath.Replace("//", "").Replace("/", "")}";
-            }else
+            }
+            else
             {
                 intervalPath = new Uri(request.Url).LocalPath.Replace("//", "/").Replace("/", Env.PathSeperator);
             }

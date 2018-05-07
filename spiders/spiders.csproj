@@ -7,12 +7,18 @@
   <ItemGroup>
     <Compile Remove="Class1.cs" />
   </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Net.Http" Version="4.3.3" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Libraries\DotnetSpider\DotnetSpider.Core\DotnetSpider.Core.csproj" />
     <ProjectReference Include="..\Libraries\DotnetSpider\DotnetSpider.Extension\DotnetSpider.Extension.csproj" />
     <ProjectReference Include="..\Libraries\DotnetSpider\DotnetSpider.HtmlAgilityPack\DotnetSpider.HtmlAgilityPack.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Tools\" />
+    <None Update="Template.html">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 </Project>
