@@ -3,6 +3,9 @@ using System.Text;
 using DotnetSpider.Core.Proxy;
 using DotnetSpider.Core.Infrastructure;
 using System;
+using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace DotnetSpider.Core
 {
@@ -13,6 +16,7 @@ namespace DotnetSpider.Core
 	{
 		private Encoding _encoding = Encoding.UTF8;
 		private string _encodingName;
+		private ConcurrentBag<Request> _startRequests = new ConcurrentBag<Request>();
 
 		/// <summary>
 		/// 代理池
@@ -92,7 +96,7 @@ namespace DotnetSpider.Core
 		/// <summary>
 		/// 起始请求
 		/// </summary>
-		public readonly List<Request> StartRequests = new List<Request>();
+		public IReadOnlyCollection<Request> StartRequests => new ReadOnlyEnumerable<Request>(_startRequests);
 
 		/// <summary>
 		/// 每处理完一个目标链接后停顿的时间, 单位毫秒 
@@ -124,31 +128,48 @@ namespace DotnetSpider.Core
 		/// <summary>
 		/// 添加一个起始链接到当前站点 
 		/// </summary>
-		/// <param name="startUrl">起始链接</param>
-		public void AddStartUrl(string startUrl)
+		/// <param name="url">起始链接</param>
+		public void AddStartUrl(string url)
 		{
-			AddStartRequest(new Request(startUrl, null));
+			AddStartUrls(url);
+		}
+
+		/// <summary>
+		/// 添加多个个起始链接到当前站点 
+		/// </summary>
+		/// <param name="url">起始链接</param>
+		public void AddStartUrls(params string[] urls)
+		{
+			if (urls == null)
+			{
+				throw new ArgumentNullException($"{nameof(urls)} should not be null.");
+			}
+			AddStartUrls(urls.AsEnumerable());
 		}
 
 		/// <summary>
 		/// 添加一个起始链接到当前站点 
 		/// </summary>
-		/// <param name="startUrl">起始链接</param>
+		/// <param name="url">起始链接</param>
 		/// <param name="datas">链接对应的一些额外数据</param>
-		public void AddStartUrl(string startUrl, IDictionary<string, dynamic> datas)
+		public void AddStartUrl(string url, IDictionary<string, dynamic> datas)
 		{
-			AddStartRequest(new Request(startUrl, datas));
+			AddStartRequest(new Request(url, datas));
 		}
 
 		/// <summary>
 		/// 添加多个起始链接到当前站点 
 		/// </summary>
-		/// <param name="startUrls">起始链接</param>
-		public void AddStartUrls(IEnumerable<string> startUrls)
+		/// <param name="urls">起始链接</param>
+		public void AddStartUrls(IEnumerable<string> urls)
 		{
-			foreach (var url in startUrls)
+			if (urls == null)
 			{
-				AddStartUrl(url);
+				throw new ArgumentNullException($"{nameof(urls)} should not be null.");
+			}
+			foreach (var url in urls)
+			{
+				AddStartRequest(new Request(url, null));
 			}
 		}
 
@@ -158,11 +179,20 @@ namespace DotnetSpider.Core
 		/// <param name="request">请求对象</param>
 		public void AddStartRequest(Request request)
 		{
-			lock (this)
+			AddStartRequests(request);
+		}
+
+		/// <summary>
+		/// 添加一个请求对象到当前站点
+		/// </summary>
+		/// <param name="request">请求对象</param>
+		public void AddStartRequests(params Request[] requests)
+		{
+			if (requests == null)
 			{
-				request.Site = request.Site ?? this;
-				StartRequests.Add(request);
+				throw new ArgumentNullException($"{nameof(requests)} should not be null.");
 			}
+			AddStartRequests(requests.AsEnumerable());
 		}
 
 		/// <summary>
@@ -171,13 +201,13 @@ namespace DotnetSpider.Core
 		/// <param name="requests">请求对象</param>
 		public void AddStartRequests(IEnumerable<Request> requests)
 		{
-			lock (this)
+			if (requests == null)
 			{
-				foreach (var request in requests)
-				{
-					request.Site = request.Site ?? this;
-					StartRequests.Add(request);
-				}
+				throw new ArgumentNullException($"{nameof(requests)} should not be null.");
+			}
+			foreach (var request in requests)
+			{
+				_startRequests.Add(request);
 			}
 		}
 
@@ -186,10 +216,7 @@ namespace DotnetSpider.Core
 		/// </summary>
 		public void ClearStartRequests()
 		{
-			lock (this)
-			{
-				StartRequests.Clear();
-			}
+			_startRequests = new ConcurrentBag<Request>();
 		}
 
 		/// <summary>
@@ -204,6 +231,34 @@ namespace DotnetSpider.Core
 			else
 			{
 				Headers.Add(key, value);
+			}
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="request"></param>
+		/// <param name="site"></param>
+		/// <returns></returns>
+		internal Page AddToCycleRetry(Request request)
+		{
+			Page page = new Page(request)
+			{
+				ContentType = ContentType
+			};
+
+			request.CycleTriedTimes++;
+
+			if (request.CycleTriedTimes <= CycleRetryTimes)
+			{
+				request.Priority = 0;
+				page.AddTargetRequest(request, false);
+				page.Retry = true;
+				return page;
+			}
+			else
+			{
+				return null;
 			}
 		}
 	}

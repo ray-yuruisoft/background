@@ -19,9 +19,7 @@ namespace DotnetSpider.Core
 	/// </summary>
 	public static class Startup
 	{
-
         public static ConcurrentQueue<object> spiders = new ConcurrentQueue<object>();
-
         /// <summary>
         /// DLL名字中包含任意一个即是需要扫描的DLL
         /// </summary>
@@ -74,7 +72,7 @@ namespace DotnetSpider.Core
 					runMethod.Invoke(spider, new object[] { parameters });
 				}
 			}
-        }
+		}
 
 		/// <summary>
 		/// 加载环境变量

@@ -42,6 +42,8 @@ namespace DotnetSpider.Core.Scheduler
 		/// </summary>
 		public override long ErrorRequestsCount => _errorCounter.Value;
 
+		public override bool IsDistributed => false;
+
 		/// <summary>
 		/// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
 		/// </summary>
@@ -86,15 +88,25 @@ namespace DotnetSpider.Core.Scheduler
 				else
 				{
 					Request request;
-					if (DepthFirst)
+
+					switch (TraverseStrategy)
 					{
-						request = _queue.Last();
-						_queue.RemoveAt(_queue.Count - 1);
-					}
-					else
-					{
-						request = _queue.First();
-						_queue.RemoveAt(0);
+						case TraverseStrategy.DFS:
+							{
+								request = _queue.Last();
+								_queue.RemoveAt(_queue.Count - 1);
+								break;
+							}
+						case TraverseStrategy.BFS:
+							{
+								request = _queue.First();
+								_queue.RemoveAt(0);
+								break;
+							}
+						default:
+							{
+								throw new NotImplementedException();
+							}
 					}
 
 					return request;

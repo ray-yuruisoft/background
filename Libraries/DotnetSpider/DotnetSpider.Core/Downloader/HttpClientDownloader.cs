@@ -11,6 +11,7 @@ using DotnetSpider.Core.Redial;
 using System.Runtime.CompilerServices;
 using System.Net;
 using System.Threading.Tasks;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace DotnetSpider.Core.Downloader
 {
@@ -22,6 +23,8 @@ namespace DotnetSpider.Core.Downloader
 	/// </summary>
 	public class HttpClientDownloader : BaseDownloader
 	{
+		private HashSet<string> _initedCookieContainers = new HashSet<string>();
+
 		/// <summary>
 		/// What mediatype should not be treated as file to download.
 		/// </summary>
@@ -48,6 +51,8 @@ namespace DotnetSpider.Core.Downloader
 		private readonly string _downloadFolder;
 		private readonly bool _decodeHtml;
 		private readonly double _timeout = 8000;
+
+		public bool AllowAutoRedirect { get; set; } = true;
 
 		/// <summary>
 		/// A <see cref="HttpClient"/> pool
@@ -103,32 +108,30 @@ namespace DotnetSpider.Core.Downloader
 		/// <param name="request">请求信息 <see cref="Request"/></param>
 		/// <param name="spider">爬虫 <see cref="ISpider"/></param>
 		/// <returns>页面数据 <see cref="Page"/></returns>
-		protected override Page DowloadContent(Request request, ISpider spider)
+		protected override async Task<Page> DowloadContent(Request request, ISpider spider)
 		{
 			HttpResponseMessage response = null;
 			try
 			{
 				var httpMessage = GenerateHttpRequestMessage(request, spider.Site);
 
-				HttpClientElement httpClientItem;
+				HttpClientEntry httpClientEntry;
 				if (spider.Site.HttpProxyPool == null)
 				{
 					// Request可以设置不同的DownloaderGroup来使用不同的HttpClient
-					httpClientItem = HttpClientPool.GetHttpClient(spider, this, CookieContainer, request.DownloaderGroup, CookieInjector);
+					httpClientEntry = HttpClientPool.GetHttpClient(request.DownloaderGroup);
 				}
 				else
 				{
 					// TODO: 代理模式下: request.DownloaderGroup 再考虑
 					var proxy = spider.Site.HttpProxyPool.GetProxy();
 					request.Proxy = proxy;
-					httpClientItem = HttpClientPool.GetHttpClient(spider, this, CookieContainer, proxy, CookieInjector);
-				}
-				if (!Equals(httpClientItem.Client.Timeout.TotalSeconds, _timeout))
-				{
-					httpClientItem.Client.Timeout = new TimeSpan(0, 0, (int)_timeout);
+					httpClientEntry = HttpClientPool.GetHttpClient(proxy.Hash);
 				}
 
-				response = NetworkCenter.Current.Execute("http", () => httpClientItem.Client.SendAsync(httpMessage).Result);
+				PrepareHttpClient(httpClientEntry);
+
+				response = NetworkCenter.Current.Execute("http", () => httpClientEntry.Client.SendAsync(httpMessage).Result);
 				request.StatusCode = response.StatusCode;
 				response.EnsureSuccessStatusCode();
 
@@ -139,7 +142,7 @@ namespace DotnetSpider.Core.Downloader
 					if (!spider.Site.DownloadFiles)
 					{
 						Logger.Log(spider.Identity, $"Ignore: {request.Url} because media type is not allowed to download.", Level.Warn);
-						return new Page(request) { Skip = true };
+						return await Task.FromResult(new Page(request) { Skip = true });
 					}
 					else
 					{
@@ -158,11 +161,12 @@ namespace DotnetSpider.Core.Downloader
 
 				page.TargetUrl = response.RequestMessage.RequestUri.AbsoluteUri;
 
-				return page;
+				return await Task.FromResult(page);
 			}
 			catch (Exception e)
 			{
-				return CreateRetryPage(e, request, spider);
+				var page = CreateRetryPage(e, request, spider);
+				return await Task.FromResult(page);
 			}
 			finally
 			{
@@ -177,9 +181,73 @@ namespace DotnetSpider.Core.Downloader
 			}
 		}
 
+		protected virtual string ReadContent(Site site, HttpResponseMessage response)
+		{
+			byte[] contentBytes = response.Content.ReadAsByteArrayAsync().Result;
+			contentBytes = PreventCutOff(contentBytes);
+			if (string.IsNullOrWhiteSpace(site.EncodingName))
+			{
+				var charSet = response.Content.Headers.ContentType?.CharSet;
+				Encoding htmlCharset = EncodingExtensions.GetEncoding(charSet, contentBytes);
+				return htmlCharset.GetString(contentBytes, 0, contentBytes.Length);
+			}
+			else
+			{
+				return site.Encoding.GetString(contentBytes, 0, contentBytes.Length);
+			}
+		}
+
+		private Page HandleResponse(Request request, HttpResponseMessage response, Site site)
+		{
+			string content = ReadContent(site, response);
+
+			if (_decodeHtml)
+			{
+#if NET45
+				content = HttpUtility.UrlDecode(HttpUtility.HtmlDecode(content), string.IsNullOrEmpty(site.EncodingName) ? Encoding.Default : site.Encoding);
+#else
+				content = System.Net.WebUtility.UrlDecode(System.Net.WebUtility.HtmlDecode(content));
+#endif
+			}
+
+			Page page = new Page(request)
+			{
+				Content = content
+			};
+
+			//foreach (var header in response.Headers)
+			//{
+			//	page.Request.PutExtra(header.Key, header.Value);
+			//}
+
+			return page;
+		}
+
+		private void PrepareHttpClient(HttpClientEntry httpClientEntry)
+		{
+			httpClientEntry.Init(AllowAutoRedirect, () =>
+			{
+				if (!Equals(httpClientEntry.Client.Timeout.TotalSeconds, _timeout))
+				{
+					httpClientEntry.Client.Timeout = new TimeSpan(0, 0, (int)_timeout);
+				}
+			}, CopyCookieContainer);
+		}
+
+		private CookieContainer CopyCookieContainer()
+		{
+			using (MemoryStream stream = new MemoryStream())
+			{
+				BinaryFormatter formatter = new BinaryFormatter();
+				formatter.Serialize(stream, CookieContainer);
+				stream.Seek(0, SeekOrigin.Begin);
+				return (CookieContainer)formatter.Deserialize(stream);
+			}
+		}
+
 		private Page CreateRetryPage(Exception e, Request request, ISpider spider)
 		{
-			Page page = spider.Site.CycleRetryTimes > 0 ? Spider.AddToCycleRetry(request, spider.Site) : new Page(request);
+			Page page = spider.Site.CycleRetryTimes > 0 ? spider.Site.AddToCycleRetry(request) : new Page(request);
 			if (page != null)
 			{
 				page.Exception = e;
@@ -252,49 +320,7 @@ namespace DotnetSpider.Core.Downloader
 			return httpRequestMessage;
 		}
 
-		private Page HandleResponse(Request request, HttpResponseMessage response, Site site)
-		{
-			string content = ReadContent(site, response);
-
-			if (_decodeHtml)
-			{
-#if NET45
-				content = HttpUtility.UrlDecode(HttpUtility.HtmlDecode(content), string.IsNullOrEmpty(site.EncodingName) ? Encoding.Default : site.Encoding);
-#else
-				content = System.Net.WebUtility.UrlDecode(System.Net.WebUtility.HtmlDecode(content));
-#endif
-			}
-
-			Page page = new Page(request)
-			{
-				Content = content
-			};
-
-			//foreach (var header in response.Headers)
-			//{
-			//	page.Request.PutExtra(header.Key, header.Value);
-			//}
-
-			return page;
-		}
-
-		private string ReadContent(Site site, HttpResponseMessage response)
-		{
-			byte[] contentBytes = response.Content.ReadAsByteArrayAsync().Result;
-			contentBytes = PreventCutOff(contentBytes);
-			if (string.IsNullOrWhiteSpace(site.EncodingName))
-			{
-				var charSet = response.Content.Headers.ContentType?.CharSet;
-				Encoding htmlCharset = EncodingExtensions.GetEncoding(charSet, contentBytes);
-				return htmlCharset.GetString(contentBytes, 0, contentBytes.Length);
-			}
-			else
-			{
-				return site.Encoding.GetString(contentBytes, 0, contentBytes.Length);
-			}
-		}
-
-		private Page SaveFile(Request request, HttpResponseMessage response, ISpider spider)
+		public virtual Page SaveFile(Request request, HttpResponseMessage response, ISpider spider)
 		{
 			var intervalPath = new Uri(request.Url).LocalPath.Replace("//", "/").Replace("/", Env.PathSeperator);
 			string filePath = $"{_downloadFolder}{Env.PathSeperator}{spider.Identity}{intervalPath}";

@@ -48,9 +48,9 @@ namespace background
             foreach (var item in DotnetSpider.Core.Startup.spiders)
             {
                 var temp = item as Spider;
-                if(temp.Stat == Status.Init 
-                   || temp.Stat == Status.Paused
-                   || temp.Stat == Status.Running
+                if(temp.Status == Status.Init 
+                   || temp.Status == Status.Paused
+                   || temp.Status == Status.Running
                   ){
                     temp.Exit();
                 }

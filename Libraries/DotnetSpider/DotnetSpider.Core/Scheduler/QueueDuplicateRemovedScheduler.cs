@@ -1,4 +1,5 @@
 using DotnetSpider.Core.Infrastructure;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -14,6 +15,8 @@ namespace DotnetSpider.Core.Scheduler
 		private List<Request> _queue = new List<Request>();
 		private readonly AutomicLong _successCounter = new AutomicLong(0);
 		private readonly AutomicLong _errorCounter = new AutomicLong(0);
+
+		public override bool IsDistributed => false;
 
 		/// <summary>
 		/// 是否会使用互联网
@@ -58,15 +61,24 @@ namespace DotnetSpider.Core.Scheduler
 				else
 				{
 					Request request;
-					if (DepthFirst)
+					switch (TraverseStrategy)
 					{
-						request = _queue.Last();
-						_queue.RemoveAt(_queue.Count - 1);
-					}
-					else
-					{
-						request = _queue.First();
-						_queue.RemoveAt(0);
+						case TraverseStrategy.DFS:
+							{
+								request = _queue.Last();
+								_queue.RemoveAt(_queue.Count - 1);
+								break;
+							}
+						case TraverseStrategy.BFS:
+							{
+								request = _queue.First();
+								_queue.RemoveAt(0);
+								break;
+							}
+						default:
+							{
+								throw new NotImplementedException();
+							}
 					}
 
 					return request;
@@ -135,7 +147,7 @@ namespace DotnetSpider.Core.Scheduler
 			{
 				lock (_lock)
 				{
-					return new ReadOnlyCollection<Request>(_queue.ToArray());
+					return new ReadOnlyEnumerable<Request>(_queue.ToArray());
 				}
 			}
 		}

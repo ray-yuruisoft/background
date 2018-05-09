@@ -6,10 +6,15 @@ namespace DotnetSpider.Core.Scheduler
 {
 	public abstract class BaseScheduler : Named, IScheduler, IDisposable
 	{
+		private int _depth = int.MaxValue;
+		private TraverseStrategy _traverseStrategy = TraverseStrategy.DFS;
+
 		/// <summary>
 		/// 爬虫对象
 		/// </summary>
-		protected ISpider Spider { get; set; }
+		protected ISpider Spider { get; private set; }
+
+		public abstract bool IsDistributed { get; }
 
 		/// <summary>
 		/// 采集成功的链接数加 1
@@ -55,7 +60,28 @@ namespace DotnetSpider.Core.Scheduler
 		/// <summary>
 		/// 是否深度优先
 		/// </summary>
-		public bool DepthFirst { get; set; } = true;
+		public TraverseStrategy TraverseStrategy
+		{
+			get => _traverseStrategy;
+			set
+			{
+				CheckIfRunning();
+				_traverseStrategy = value;
+			}
+		}
+
+		public int Depth
+		{
+			get => _depth; set
+			{
+				CheckIfRunning();
+				if (value <= 0)
+				{
+					throw new ArgumentException("Depth should be greater than 0.");
+				}
+				_depth = value;
+			}
+		}
 
 		/// <summary>
 		/// 添加请求对象到队列
@@ -65,7 +91,7 @@ namespace DotnetSpider.Core.Scheduler
 		{
 			if (request.Site == null)
 			{
-				throw new ArgumentException("Request site is missing.");
+				request.Site = Spider.Site;
 			}
 			if (UseInternet)
 			{
@@ -120,5 +146,13 @@ namespace DotnetSpider.Core.Scheduler
 		}
 
 		protected abstract void ImplPush(Request request);
+
+		protected void CheckIfRunning()
+		{
+			if (Spider != null)
+			{
+				throw new SpiderException("Cann't set value after scheduler already inited.");
+			}
+		}
 	}
 }

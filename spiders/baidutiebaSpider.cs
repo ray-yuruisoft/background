@@ -128,8 +128,8 @@ namespace spiders
                 if (a.Results.ContainsKey("spiderInfo"))
                 {
                     var spiderInfo = a.Results["spiderInfo"] as baidutieba_spiders;
-                    spiderInfo.guid = spider.Identity;
-                    spiderInfo.starturl = spider.Site.StartRequests[0].Url;
+                    spiderInfo.guid = spider.Identity;                  
+                    spiderInfo.starturl = spider.Site.StartRequests.First().Url;
                     con.Execute("INSERT INTO baidutieba_spiders (guid,starturl,createtime,tiebaname) VALUES (@guid,@starturl,@createtime,@tiebaname)", spiderInfo);
                 }
                 if (a.Results.ContainsKey("imgs"))
