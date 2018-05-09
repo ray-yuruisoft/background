@@ -35,19 +35,16 @@ namespace spiders
 
         }
 
-
         private void StartUrl(params string[] arguments)
         {
 
             if (arguments.Length != 0)
             {
-                string startUrl;
                 this.Downloader = new MyDownloader(bool.Parse(arguments[1]));
                 if (arguments.Length == 2)
                 {
+                    Cache.Instance.Set("searchkey", arguments[0]);
                     var code = System.Web.HttpUtility.UrlEncode(arguments[0]);
-
-                    startUrl = $"https://tieba.baidu.com/f?kw={code}&ie=utf-8&pn=0";
                     AddStartUrl($"https://tieba.baidu.com/f?kw={code}&ie=utf-8&pn=0");
                 }
                 else
@@ -63,7 +60,7 @@ namespace spiders
         private void InitDatabaseAndTables()
         {
             Dictionary<string, string> tables = new Dictionary<string, string>();
-            tables.Add("baidutieba_imgs", "`id` int(11) NOT NULL AUTO_INCREMENT,`postguid` varchar(32) NOT NULL,`url` varchar(255) NOT NULL,`filename` varchar(255) NOT NULL,`originalpath` varchar(255) NOT NULL,`floorlevel` int(11) NOT NULL,`floorindex` int(11) NOT NULL,`posttime` datetime NOT NULL,PRIMARY KEY (`id`)");
+            tables.Add("baidutieba_imgs", "`id` int(11) NOT NULL AUTO_INCREMENT,`spiderguid` varchar(32) NOT NULL,`postguid` varchar(32) NOT NULL,`url` varchar(255) NOT NULL,`filename` varchar(255) NOT NULL,`originalpath` varchar(255) NOT NULL,`floorlevel` int(11) NOT NULL,`floorindex` int(11) NOT NULL,`posttime` datetime NOT NULL,PRIMARY KEY (`id`)");
             tables.Add("baidutieba_posts", "`id` int(11) NOT NULL AUTO_INCREMENT,`guid` varchar(32) NOT NULL,`spiderguid` varchar(32) NOT NULL,`url` varchar(255) NOT NULL,`title` varchar(100) NOT NULL,`landlord` varchar(100) NOT NULL,`depth` int(5) NOT NULL,PRIMARY KEY (`id`)");
             tables.Add("baidutieba_spiders", "`id` int(11) NOT NULL AUTO_INCREMENT,`guid` varchar(32) DEFAULT NULL,`starturl` varchar(255) DEFAULT NULL,`createtime` datetime DEFAULT NULL,`tiebaname` varchar(100) DEFAULT NULL,PRIMARY KEY (`id`)");
             InitDatabaseAndTables("spider", tables);
@@ -94,12 +91,7 @@ namespace spiders
         private void GenerateHtml()
         {
 
-            var postdata = baidutiebaPipeline.con.QueryFirst<baidutiebaPipeline.baidutieba_posts>($"select * from baidutieba_posts where spiderguid = '{this.Identity}'");
-            if (postdata == null) return;
-
-
-            //todo 这里需增加个贴吧判断
-            var datas = baidutiebaPipeline.con.Query<baidutiebaPipeline.baidutieba_imgs>("select * from baidutieba_imgs");
+            var datas = baidutiebaPipeline.con.Query<baidutiebaPipeline.baidutieba_imgs>($"select * from baidutieba_imgs where spiderguid = '{Identity}'");
             if (datas.Count() == 0) return;
 
             List<string> content = new List<string>();
@@ -108,7 +100,7 @@ namespace spiders
                 content.Add($"<div>帖子开始</div>");
                 foreach (var bottom in item.OrderBy(c => c.floorlevel).ThenBy(c => c.floorindex))
                 {
-                    content.Add($"<img src='./{DateTime.Now.ToString("yyyy_MM_dd")}/{bottom.filename}'>");
+                    content.Add($"<img src='./{Identity}/{bottom.filename}'>");
                 }
                 content.Add($"<div>帖子结束</div>");
             }
@@ -120,9 +112,7 @@ namespace spiders
             var indexTemppath = Directory.GetCurrentDirectory() + $"{Env.PathSeperator}Template.html";
             string indexTemp = File.ReadAllText(indexTemppath, Encoding.UTF8);
             var index = indexTemp.Replace("$", imghtml);
-            //    File.WriteAllText(Directory.GetCurrentDirectory() + $"{Env.PathSeperator}download{Env.PathSeperator}{}.html", index, Encoding.UTF8);
-
-
+            File.WriteAllText(Directory.GetCurrentDirectory() + $"{Env.PathSeperator}download{Env.PathSeperator}{Cache.Instance.Get("searchkey")}.html", index, Encoding.UTF8);
         }
 
     }
@@ -151,7 +141,7 @@ namespace spiders
                         var s = ((spider as Spider).Downloader as MyDownloader);
                         if (s._customintervalPath)
                         {
-                            intervalPath = $"{Env.PathSeperator}{DateTime.Now.ToString("yyyy_MM_dd")}{Env.PathSeperator}{new Uri(c.url).LocalPath.Replace("//", "").Replace("/", "")}";
+                            intervalPath = $"{Env.PathSeperator}{new Uri(c.url).LocalPath.Replace("//", "").Replace("/", "")}";
                         }
                         else
                         {
@@ -160,7 +150,8 @@ namespace spiders
                         var t = intervalPath.Split(Env.PathSeperator[0]);
                         c.filename = t[t.Length - 1];
                         c.originalpath = $"{Path.Combine(Env.BaseDirectory, "download")}{Env.PathSeperator}{spider.Identity}{intervalPath}";
-                        con.Execute("INSERT INTO baidutieba_imgs (postguid,url,filename,originalpath,floorlevel,floorindex,posttime) VALUES (@postguid,@url,@filename,@originalpath,@floorlevel,@floorindex,@posttime)", c);
+                        c.spiderguid = spider.Identity;
+                        con.Execute("INSERT INTO baidutieba_imgs (spiderguid,postguid,url,filename,originalpath,floorlevel,floorindex,posttime) VALUES (@spiderguid,@postguid,@url,@filename,@originalpath,@floorlevel,@floorindex,@posttime)", c);
                     }
                 }
                 if (a.Results.ContainsKey("post"))
@@ -169,7 +160,19 @@ namespace spiders
                     post.landlord = Regex.Replace(post.landlord, @"\uD83D[\uDC00-\uDFFF]|\uD83C[\uDC00-\uDFFF]|\uFFFD", "");
                     post.title = Regex.Replace(post.title, @"\uD83D[\uDC00-\uDFFF]|\uD83C[\uDC00-\uDFFF]|\uFFFD", "");
                     post.spiderguid = spider.Identity;
-                    con.Execute("INSERT INTO baidutieba_posts (guid,spiderguid,url,title,landlord,depth) VALUES (@guid,@spiderguid,@url,@title,@landlord,@depth)", post);
+                    var res = con.Execute("INSERT INTO baidutieba_posts (guid,spiderguid,url,title,landlord,depth) VALUES (@guid,@spiderguid,@url,@title,@landlord,@depth)", post);
+                    if (res > 0)
+                    {
+                        var key = post.url.KeepExceptLastNumbers().Replace("?see_lz=1&pn=", "");
+                        Tuple<string, int> tuple = Cache.Instance.Get(key);
+                        Cache.Instance.Remove(key);
+                        if (tuple.Item2 > 1)
+                        {
+                            Cache.Instance.Set(key, new Tuple<string, int>(tuple.Item1, tuple.Item2));
+
+                        }
+                    }
+
                 }
             }
         }
@@ -179,6 +182,7 @@ namespace spiders
         public class baidutieba_imgs
         {
             public int id { get; set; }
+            public string spiderguid { get; set; }
             public string postguid { get; set; }
             public string url { get; set; }
             public string filename { get; set; }
@@ -324,15 +328,19 @@ namespace spiders
                 .GetValue()
                 ;
 
-            var num = endurl.KeepLastNumbers().ToInt32();
-            var pagenum = num / 50 + 1;
-            List<string> listurls = new List<string>();
-            var urlprefix = endurl.KeepExceptLastNumbers();
-            for (var i = 1; i <= pagenum; i++)
+            //可能只有1页
+            if (endurl != null)
             {
-                listurls.Add($"{urlprefix}{i * 50}");
+                var num = endurl.KeepLastNumbers().ToInt32();
+                var pagenum = num / 50 + 1;
+                List<string> listurls = new List<string>();
+                var urlprefix = endurl.KeepExceptLastNumbers();
+                for (var i = 1; i <= pagenum; i++)
+                {
+                    listurls.Add($"{urlprefix}{i * 50}");
+                }
+                page.AddTargetRequests(listurls);
             }
-            page.AddTargetRequests(listurls);
 
             #region spiderInfo
 
@@ -382,10 +390,10 @@ namespace spiders
             var title = page
                 .Selectable
                 .Select
-                (Selectors.XPath(@"//h1[@class='core_title_txt  ']/text()"))
+                (Selectors.XPath(@"//*[contains(@class,'core_title_txt')]/text()"))
                 .GetValue()
                 ;
-
+            //*[contains(@class,'d_post_content_main')]
             var posturlprefix = page.Url.KeepExceptLastNumbers().Replace("?see_lz=1&pn=", "");
             Cache.Instance.Set(posturlprefix, new Tuple<string, int>(Guid.NewGuid().ToString("N"), postpagenum));
 
@@ -426,7 +434,7 @@ namespace spiders
             var totalElements = page
                 .Selectable
                 .SelectList
-                (Selectors.XPath(@"//code[@id='pagelet_html_frs-list/pagelet/thread_list']//li[@class=' j_thread_list clearfix']//div[@class='threadlist_title pull_left j_th_tit ']"))
+                (Selectors.XPath(@"//code[@id='pagelet_html_frs-list/pagelet/thread_list']//li[@class=' j_thread_list clearfix']//div[contains(@class,'threadlist_title')]"))
                 .Nodes();
             List<string> targetlinks = new List<string>();
             foreach (var element in totalElements)
@@ -449,7 +457,6 @@ namespace spiders
             var floorsCount = page.Selectable.SelectList(Selectors.XPath(@"//*[contains(@class,'d_post_content_main')]")).Nodes().Count();
             for (var i = 1; i <= floorsCount; i++)
             {
-
                 var imgs = page
                     .Selectable
                     .SelectList
@@ -459,17 +466,18 @@ namespace spiders
                     .GetValues()
                     .ToList()
                     ;
-
-                var posttime = page
+                //yyyy-MM-dd HH:mm
+                var reg = new Regex("[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}");
+                var posttimedata = page
                     .Selectable
                     .Select
                     (
                         Selectors.XPath
-                        ($"((//*[contains(@class,'d_post_content_main')])[{i}]//span[@class='tail-info'])[3]")
+                        ($"(//div[@class = 'p_postlist']/div)[{i}]")
                     )
                     .GetValue()
                     ;
-
+                var posttime = reg.Match(posttimedata).ToString();
                 for (var k = 0; k < imgs.Count(); k++)
                 {
                     var temp = imgs[k].Split('?')[0].Split('.');
@@ -478,28 +486,9 @@ namespace spiders
                     baidutiebaPipeline.baidutieba_imgs model = new baidutiebaPipeline.baidutieba_imgs();
                     model.floorindex = k + 1;
                     model.floorlevel = i;
-
-                    //todo
-                    model.posttime = DateTime.Now;
-
+                    model.posttime = posttime.IsDateTime("yyyy-MM-dd HH:mm") ? DateTime.Parse(posttime) : DateTime.MinValue;
                     model.url = imgs[k];
-
-                    try
-                    {
-
-                        model.postguid = Cache.Instance.Get(page.Url.Split('?')[0]).Item1;
-
-
-                    }
-                    catch (Exception e)
-                    {
-
-
-                        ;
-                    }
-
-
-
+                    model.postguid = Cache.Instance.Get(page.Url.Split('?')[0]).Item1;
                     models.Add(model);
                 }
             }

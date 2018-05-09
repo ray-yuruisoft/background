@@ -306,7 +306,7 @@ namespace spiders
             string intervalPath = null;
             if (_customintervalPath)
             {
-                intervalPath = $"{Env.PathSeperator}{DateTime.Now.ToString("yyyy_MM_dd")}{Env.PathSeperator}{new Uri(request.Url).LocalPath.Replace("//", "").Replace("/", "")}";
+                intervalPath = $"{Env.PathSeperator}{new Uri(request.Url).LocalPath.Replace("//", "").Replace("/", "")}";
             }
             else
             {
