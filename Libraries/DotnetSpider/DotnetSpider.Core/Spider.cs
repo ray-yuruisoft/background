@@ -1113,7 +1113,7 @@ namespace DotnetSpider.Core
 				Logger.Log(Identity, $"Extract {request.Url} failed, please check your pipeline: {e}.", Level.Error, e);
 			}
 
-			if (page == null)
+			if (page == null || page.Skip)
 			{
 				return;
 			}

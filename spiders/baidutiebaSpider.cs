@@ -128,7 +128,7 @@ namespace spiders
                 if (a.Results.ContainsKey("spiderInfo"))
                 {
                     var spiderInfo = a.Results["spiderInfo"] as baidutieba_spiders;
-                    spiderInfo.guid = spider.Identity;                  
+                    spiderInfo.guid = spider.Identity;
                     spiderInfo.starturl = spider.Site.StartRequests.First().Url;
                     con.Execute("INSERT INTO baidutieba_spiders (guid,starturl,createtime,tiebaname) VALUES (@guid,@starturl,@createtime,@tiebaname)", spiderInfo);
                 }
@@ -160,19 +160,15 @@ namespace spiders
                     post.landlord = Regex.Replace(post.landlord, @"\uD83D[\uDC00-\uDFFF]|\uD83C[\uDC00-\uDFFF]|\uFFFD", "");
                     post.title = Regex.Replace(post.title, @"\uD83D[\uDC00-\uDFFF]|\uD83C[\uDC00-\uDFFF]|\uFFFD", "");
                     post.spiderguid = spider.Identity;
-                    var res = con.Execute("INSERT INTO baidutieba_posts (guid,spiderguid,url,title,landlord,depth) VALUES (@guid,@spiderguid,@url,@title,@landlord,@depth)", post);
-                    if (res > 0)
+                    con.Execute("INSERT INTO baidutieba_posts (guid,spiderguid,url,title,landlord,depth) VALUES (@guid,@spiderguid,@url,@title,@landlord,@depth)", post);
+
+                    var key = post.url.KeepExceptLastNumbers().Replace("?see_lz=1&pn=", "");
+                    Tuple<string, int> tuple = Cache.Instance.Get(key);
+                    Cache.Instance.Remove(key);
+                    if (tuple.Item2 > 1)
                     {
-                        var key = post.url.KeepExceptLastNumbers().Replace("?see_lz=1&pn=", "");
-                        Tuple<string, int> tuple = Cache.Instance.Get(key);
-                        Cache.Instance.Remove(key);
-                        if (tuple.Item2 > 1)
-                        {
-                            Cache.Instance.Set(key, new Tuple<string, int>(tuple.Item1, tuple.Item2));
-
-                        }
+                        Cache.Instance.Set(key, new Tuple<string, int>(tuple.Item1, tuple.Item2));
                     }
-
                 }
             }
         }
@@ -216,6 +212,7 @@ namespace spiders
 
     public class baidutiebaPageProcessor : BasePageProcessor
     {
+        private static Tools.Logger Logger = new Tools.Logger("baidutiebaPageProcessor");
         protected override void Handle(Page page)
         {
 
@@ -229,22 +226,67 @@ namespace spiders
             {
                 case HandleType.FirstPageFirstlist:
                     {
-                        FirstPageFirstlistHandler(page);
+                        try
+                        {
+                            if (!FirstPageFirstlistHandler(page))
+                            {
+                                break;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error($"FirstPageFirstlistHandler Error. this message is '{e.Message}'");
+                        }
                     }
                     break;
                 case HandleType.FirstPageSecondlist:
                     {
-                        FirstPageSecondlistHandler(page);
+                        try
+                        {
+                            if (!FirstPageSecondlistHandler(page))
+                            {
+                                break;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error($"FirstPageSecondlistHandler Error. this message is '{e.Message}'");
+                        }
                     }
                     break;
                 case HandleType.PostPageFirstlist:
                     {
-                        PostPageFirstlistHandler(page);
+                        try
+                        {
+                            if (!PostPageFirstlistHandler(page))
+                            {
+                                break;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error($"PostPageFirstlistHandler Error. this message is '{e.Message}'");
+                        }
                     }
                     break;
                 case HandleType.PostPageSecondlist:
                     {
-                        PostPageSecondlistHandler(page);
+                        try
+                        {
+                            if (!PostPageSecondlistHandler(page))
+                            {
+                                break;
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            Logger.Error($"PostPageSecondlistHandler Error. this message is '{e.Message}'");
+                        }
+                    }
+                    break;
+                case HandleType.Wrong:
+                    {
+                        Logger.Error($"Wrong HandleType,page url is '{page.Url}'");
                     }
                     break;
                 default:
@@ -253,7 +295,6 @@ namespace spiders
                     break;
             }
         }
-
         private HandleType GetHandleType(Page page)
         {
 
@@ -303,34 +344,67 @@ namespace spiders
 
         };
 
-        private void FirstPageFirstlistHandler(Page page)
+        private bool FirstPageFirstlistHandler(Page page)
         {
+
             page.Content = page
                 .Content
                 .Replace("<!--", "")
                 .Replace("-->", "")
                 ;
 
-            var tiebaname = page
-                .Selectable
-                .Select
-                (Selectors.XPath("//*[@class='card_title']/a/text()"))
-                .GetValue()
-                .Replace("\n", "")
-                .Replace(" ", "")
-                ;
+            #region parse XPAH
 
-            var endurl = page
-                .Selectable
-                .Select
-                (Selectors.XPath(@"//*[@id='frs_list_pager']/a[last()]"))
-                .Links()
-                .GetValue()
-                ;
+            string tiebaname = "";
+            try
+            {
+                tiebaname = page
+               .Selectable
+               .Select
+               (Selectors.XPath("//*[@class='card_title']/a/text()"))
+               .GetValue()
+               .Replace("\n", "")
+               .Replace(" ", "")
+               ;
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"in FirstPageFirstlistHandler,tiebaname can not be parsed by XPAH. this message is {e.Message}");
+                return false;
+            }
+            if (tiebaname.IsNullOrEmpty()) return false;
+
+            //https://tieba.baidu.com/f?kw=%E7%AE%80%E9%98%B3&ie=utf-8&pn=117050
+            //^http[s]?\:\/\/tieba\.baidu\.com\/f\?kw\=.*?pn=\d+?$
+            string endurl = "";//只有1页时，可以为空
+            string endurlReg = @"^http[s]?\:\/\/tieba\.baidu\.com\/f\?kw\=.*?pn=\d+?$";
+            try
+            {
+                endurl = page
+               .Selectable
+               .Select
+               (Selectors.XPath(@"//*[@id='frs_list_pager']/a[last()]"))
+               .Links()
+               .GetValue()
+               ;
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"in FirstPageFirstlistHandler,endurl can not be parsed by XPAH. this message is {e.Message}");
+                return false;
+            }
+
+            #endregion
 
             //可能只有1页
             if (endurl != null)
             {
+                if (!new Regex(endurlReg).IsMatch(endurl))
+                {
+                    Logger.Error($"in FirstPageFirstlistHandler,endurl can not be matched by Regex. this message is {endurl}");
+                    return false;
+                }
+
                 var num = endurl.KeepLastNumbers().ToInt32();
                 var pagenum = num / 50 + 1;
                 List<string> listurls = new List<string>();
@@ -347,8 +421,6 @@ namespace spiders
             baidutiebaPipeline.baidutieba_spiders spider = new baidutiebaPipeline.baidutieba_spiders
             {
                 createtime = DateTime.Now,
-
-
                 guid = Guid.NewGuid().ToString("N"),
                 tiebaname = tiebaname
             };
@@ -356,10 +428,10 @@ namespace spiders
 
             #endregion
 
-            AddPostPage(page);
+            return AddPostPage(page);
 
         }
-        private void FirstPageSecondlistHandler(Page page)
+        private bool FirstPageSecondlistHandler(Page page)
         {
             page.Content = page
                 .Content
@@ -367,48 +439,107 @@ namespace spiders
                 .Replace("-->", "")
                 ;
 
-            AddPostPage(page);
+            return AddPostPage(page);
         }
-        private void PostPageFirstlistHandler(Page page)
+        private bool PostPageFirstlistHandler(Page page)
         {
 
-            var postpagenum = page
-                .Selectable
-                .Select
-                (Selectors.XPath(@"//*[@id='thread_theme_5']/div[1]/ul/li[2]/span[2]/text()"))
-                .GetValue()
-                .ToInt32()
-                ;
+            #region parse XPAH
 
-            var landlord = page
-                .Selectable
-                .Select
-                (Selectors.XPath(@"//div[@class='d_author']//li[@class='d_name']/a/text()"))
-                .GetValue()
-                ;
+            int postpagenum = 0;
+            try
+            {
+                postpagenum = page
+               .Selectable
+               .Select
+               (Selectors.XPath(@"//*[@id='thread_theme_5']/div[1]/ul/li[2]/span[2]/text()"))
+               .GetValue()
+               .ToInt32()
+               ;
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"PostPageFirstlistHandler Error. this message is {e.Message}");
+                return false;
+            }
+            if (postpagenum < 1)
+            {
+                Logger.Error("PostPageFirstlistHandler Error. this message is 'postpagenum is smaller than 1'");
+                return false;
+            }
 
-            var title = page
+            string landlord = "";
+            try
+            {
+                landlord = page
+               .Selectable
+               .Select
+               (Selectors.XPath(@"//div[@class='d_author']//li[@class='d_name']/a/text()"))
+               .GetValue()
+               ;
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"PostPageFirstlistHandler Error. this message is {e.Message}");
+                return false;
+            }
+            if (landlord.IsNullOrEmpty())
+            {
+                Logger.Error("PostPageFirstlistHandler Error. this message is 'landlord IsNullOrEmpty'");
+                return false;
+            }
+
+            string title = "";
+            try
+            {
+                title = page
                 .Selectable
                 .Select
                 (Selectors.XPath(@"//*[contains(@class,'core_title_txt')]/text()"))
                 .GetValue()
                 ;
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"PostPageFirstlistHandler Error. this message is {e.Message}");
+                return false;
+            }
+            if (title.IsNullOrEmpty())
+            {
+                Logger.Error("PostPageFirstlistHandler Error. this message is 'title IsNullOrEmpty'");
+                return false;
+            }
+
+            #endregion
+
             //*[contains(@class,'d_post_content_main')]
             var posturlprefix = page.Url.KeepExceptLastNumbers().Replace("?see_lz=1&pn=", "");
-            Cache.Instance.Set(posturlprefix, new Tuple<string, int>(Guid.NewGuid().ToString("N"), postpagenum));
 
-            if (postpagenum > 1)
+            try
             {
-                var postpageurls = new List<string>();
-                for (var i = 2; i <= postpagenum; i++)
-                {
-                    postpageurls.Add($"{posturlprefix}?see_lz=1&pn={i}");
-                }
-                page.AddTargetRequests(postpageurls);
+                Cache.Instance.Set(posturlprefix, new Tuple<string, int>(Guid.NewGuid().ToString("N"), postpagenum));
             }
+            catch (Exception e)//有可能重复键
+            {
+                Logger.Error($"Cache Instance Set posturlprefix Error.this message is {e.Message}");
+                return false;
+            }
+
+            var postpageurls = new List<string>();
+            for (var i = 2; i <= postpagenum; i++)
+            {
+                postpageurls.Add($"{posturlprefix}?see_lz=1&pn={i}");
+            }
+            page.AddTargetRequests(postpageurls);
+
 
             //增加缓存，帖子列表其他页 从该处获取 guid
             Tuple<string, int> tuple = Cache.Instance.Get(posturlprefix);
+            if (tuple == null)
+            {
+                Logger.Error("PostPageFirstlistHandler Error this message is 'Cache.Instance.Get(posturlprefix) is null'");
+                return false;
+            }
             baidutiebaPipeline.baidutieba_posts baidutieba_Posts = new baidutiebaPipeline.baidutieba_posts
             {
                 guid = tuple.Item1,
@@ -418,65 +549,127 @@ namespace spiders
                 depth = 1
             };
             page.AddResultItem("post", baidutieba_Posts);
-            AddDownloadLink(page);
+            return AddDownloadLink(page);
         }
-        private void PostPageSecondlistHandler(Page page)
+        private bool PostPageSecondlistHandler(Page page)
         {
-            AddDownloadLink(page);
+            return AddDownloadLink(page);
         }
 
         /// <summary>
         /// 添加帖子
         /// </summary>
-        private void AddPostPage(Page page)
+        private bool AddPostPage(Page page)
         {
-
-            var totalElements = page
+            IEnumerable<string> elements = null;
+            try
+            {
+                elements = page
                 .Selectable
                 .SelectList
                 (Selectors.XPath(@"//code[@id='pagelet_html_frs-list/pagelet/thread_list']//li[@class=' j_thread_list clearfix']//div[contains(@class,'threadlist_title')]"))
-                .Nodes();
-            List<string> targetlinks = new List<string>();
-            foreach (var element in totalElements)
+                .Links()
+                .GetValues()
+                ;
+            }
+            catch (Exception e)
             {
-                //注意  添加 ?see_lz=1 是只看楼主
-                targetlinks.Add(element.Links().GetValue() + "?see_lz=1&pn=1");
+                Logger.Error($"AddPostPage Error. this message is {e.Message}");
+                return false;
+            }
+            if (elements == null || elements.Count() == 0)//这里会出现验证码
+            {
+                Logger.Warn($"AddPostPage Warn. this message is 'elements is null or elements`s count equal 0' and 'page TargetUrl is {page.TargetUrl}'");
+                return false;
+            }
+            //https://tieba.baidu.com/p/5698708065
+            //^http[s]?\:\/\/tieba\.baidu\.com\/p.*?\d+?$
+            var elementsReg = @"^http[s]?\:\/\/tieba\.baidu\.com\/p.*?\d+?$";
+            List<string> targetlinks = new List<string>();
+            foreach (var item in elements)
+            {
+                if (new Regex(elementsReg).IsMatch(item))
+                {
+                    targetlinks.Add(item + "?see_lz=1&pn=1");//注意  添加 ?see_lz=1 是只看楼主
+                }
+            }
+            if (targetlinks.Count() == 0)
+            {
+                Logger.Warn($"AddPostPage Warn. this message is 'targetlinks has no matched url'");
+                return false;
             }
             page.AddTargetRequests(targetlinks);
-
+            return true;
         }
         /// <summary>
         /// 添加下载链接
         /// </summary>
         /// <param name="page"></param>
-        private void AddDownloadLink(Page page)
+        private bool AddDownloadLink(Page page)
         {
 
             List<baidutiebaPipeline.baidutieba_imgs> models = new List<baidutiebaPipeline.baidutieba_imgs>();
+            int floorsCount = 0;
+            try
+            {
+                floorsCount = page.Selectable.SelectList(Selectors.XPath(@"//*[contains(@class,'d_post_content_main')]")).Nodes().Count();
+            }
+            catch (Exception e)
+            {
+                Logger.Error($"AddDownloadLink Error. this message is {e.Message}");
+            }
+            if (floorsCount < 1)
+            {
+                Logger.Error($"AddDownloadLink Error. this message is 'floorsCount is smaller than 1'");
+                return false;
+            }
             //所有楼层的div集合
-            var floorsCount = page.Selectable.SelectList(Selectors.XPath(@"//*[contains(@class,'d_post_content_main')]")).Nodes().Count();
+
             for (var i = 1; i <= floorsCount; i++)
             {
-                var imgs = page
-                    .Selectable
-                    .SelectList
-                    (Selectors.XPath
-                     ($"(//*[contains(@class,'d_post_content_main')])[{i}]//img/@src")
-                    )
-                    .GetValues()
-                    .ToList()
-                    ;
+                List<string> imgs = null;
+                try
+                {
+                    imgs = page
+                       .Selectable
+                       .SelectList
+                       (Selectors.XPath
+                        ($"(//*[contains(@class,'d_post_content_main')])[{i}]//img/@src")
+                       )
+                       .GetValues()
+                       .ToList()
+                       ;
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"AddDownloadLink Error.this message is {e.Message}");
+                }
+                if (imgs == null || imgs.Count() == 0)//该页面无采集链接
+                {
+                    break;
+                }
+
                 //yyyy-MM-dd HH:mm
                 var reg = new Regex("[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}");
-                var posttimedata = page
-                    .Selectable
-                    .Select
-                    (
-                        Selectors.XPath
-                        ($"(//div[@class = 'p_postlist']/div)[{i}]")
-                    )
-                    .GetValue()
-                    ;
+                string posttimedata = "";
+                try
+                {
+                    posttimedata = page
+                   .Selectable
+                   .Select
+                   (
+                       Selectors.XPath
+                       ($"(//div[@class = 'p_postlist']/div)[{i}]")
+                   )
+                   .GetValue()
+                   ;
+                }
+                catch (Exception e)
+                {
+                    Logger.Error($"AddDownloadLink Error. this message is {e.Message}");
+                    return false;
+                }
+
                 var posttime = reg.Match(posttimedata).ToString();
                 for (var k = 0; k < imgs.Count(); k++)
                 {
@@ -496,7 +689,7 @@ namespace spiders
             if (models.Count() == 0)
             {
                 page.Skip = true;
-                return;
+                return false;
             }
             page.AddTargetRequests(models.Select(cw => cw.url));
             page.AddResultItem("imgs", models);
@@ -509,11 +702,9 @@ namespace spiders
             //if (tuple.Item2 == num) 
             //Cache.Instance.Remove(page.Url.Substring(0, index));
 
-
-
+            return true;
 
         }
-
     }
 
 }
