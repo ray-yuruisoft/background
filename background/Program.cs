@@ -48,10 +48,11 @@ namespace background
             foreach (var item in DotnetSpider.Core.Startup.spiders)
             {
                 var temp = item as Spider;
-                if(temp.Status == Status.Init 
+                if (temp.Status == Status.Init
                    || temp.Status == Status.Paused
                    || temp.Status == Status.Running
-                  ){
+                  )
+                {
                     temp.Exit();
                 }
             }
@@ -110,16 +111,15 @@ namespace background
             #region //Spider
 
             var spiders = ConfigHelper.GetAppSettingsArray("SpiderStartup");
-            if(spiders.Length != 0)
+            if (spiders.Length != 0)
             {
-                ThreadPool.QueueUserWorkItem(state =>
+
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                foreach (var item in spiders)
                 {
-                    Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
-                    foreach (var item in spiders)
-                    {
-                        DotnetSpider.Core.Startup.Run(item.Split(";"));
-                    }
-                });
+                    DotnetSpider.Core.Startup.RunAsync(item.Split(";"));
+                }
+
             }
 
             #endregion
