@@ -21,8 +21,8 @@ namespace spiders
     public class MyDownloader : HttpClientDownloader
     {
         private readonly string _downloadFolder;
-        public bool _customintervalPath;     
-        public MyDownloader(bool customintervalPath = false)
+        public bool _customintervalPath;
+        public MyDownloader(int timeout = 8000, bool customintervalPath = false) : base(timeout)
         {
             _downloadFolder = Path.Combine(Env.BaseDirectory, "download");
             _customintervalPath = customintervalPath;

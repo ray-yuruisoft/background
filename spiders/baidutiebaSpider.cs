@@ -24,6 +24,9 @@ namespace spiders
         protected override void MyInit(params string[] arguments)
         {
 
+            this.Site.SleepTime = 500;
+            this.ThreadNum = 4;
+
             StartUrl(arguments);
             AddPipeline(new baidutiebaPipeline());
             AddPageProcessor(new baidutiebaPageProcessor());
@@ -40,7 +43,7 @@ namespace spiders
 
             if (arguments.Length != 0)
             {
-                this.Downloader = new MyDownloader(bool.Parse(arguments[1]));
+                this.Downloader = new MyDownloader(4000, bool.Parse(arguments[1]));
                 if (arguments.Length == 2)
                 {
                     Cache.Instance.Set("searchkey", arguments[0]);
@@ -119,55 +122,60 @@ namespace spiders
 
     public class baidutiebaPipeline : BasePipeline
     {
-
+        private readonly object obj = new object();
         public static DbConnection con = Env.DataConnectionStringSettings.CreateDbConnection();
         public override void Process(IEnumerable<ResultItems> resultItems, ISpider spider)
         {
-            foreach (var a in resultItems)
+            lock (obj)
             {
-                if (a.Results.ContainsKey("spiderInfo"))
+                foreach (var a in resultItems)
                 {
-                    var spiderInfo = a.Results["spiderInfo"] as baidutieba_spiders;
-                    spiderInfo.guid = spider.Identity;
-                    spiderInfo.starturl = spider.Site.StartRequests.First().Url;
-                    con.Execute("INSERT INTO baidutieba_spiders (guid,starturl,createtime,tiebaname) VALUES (@guid,@starturl,@createtime,@tiebaname)", spiderInfo);
-                }
-                if (a.Results.ContainsKey("imgs"))
-                {
-                    var imgs = a.Results["imgs"] as List<baidutieba_imgs>;
-                    foreach (var c in imgs)
+                    if (a.Results.ContainsKey("spiderInfo"))
                     {
-                        string intervalPath = null;
-                        var s = ((spider as Spider).Downloader as MyDownloader);
-                        if (s._customintervalPath)
-                        {
-                            intervalPath = $"{Env.PathSeperator}{new Uri(c.url).LocalPath.Replace("//", "").Replace("/", "")}";
-                        }
-                        else
-                        {
-                            intervalPath = new Uri(c.url).LocalPath.Replace("//", "/").Replace("/", Env.PathSeperator);
-                        }
-                        var t = intervalPath.Split(Env.PathSeperator[0]);
-                        c.filename = t[t.Length - 1];
-                        c.originalpath = $"{Path.Combine(Env.BaseDirectory, "download")}{Env.PathSeperator}{spider.Identity}{intervalPath}";
-                        c.spiderguid = spider.Identity;
-                        con.Execute("INSERT INTO baidutieba_imgs (spiderguid,postguid,url,filename,originalpath,floorlevel,floorindex,posttime) VALUES (@spiderguid,@postguid,@url,@filename,@originalpath,@floorlevel,@floorindex,@posttime)", c);
+                        var spiderInfo = a.Results["spiderInfo"] as baidutieba_spiders;
+                        spiderInfo.guid = spider.Identity;
+                        spiderInfo.starturl = spider.Site.StartRequests.First().Url;
+                        con.Execute("INSERT INTO baidutieba_spiders (guid,starturl,createtime,tiebaname) VALUES (@guid,@starturl,@createtime,@tiebaname)", spiderInfo);
                     }
-                }
-                if (a.Results.ContainsKey("post"))
-                {
-                    var post = a.Results["post"] as baidutieba_posts;
-                    post.landlord = Regex.Replace(post.landlord, @"\uD83D[\uDC00-\uDFFF]|\uD83C[\uDC00-\uDFFF]|\uFFFD", "");
-                    post.title = Regex.Replace(post.title, @"\uD83D[\uDC00-\uDFFF]|\uD83C[\uDC00-\uDFFF]|\uFFFD", "");
-                    post.spiderguid = spider.Identity;
-                    con.Execute("INSERT INTO baidutieba_posts (guid,spiderguid,url,title,landlord,depth) VALUES (@guid,@spiderguid,@url,@title,@landlord,@depth)", post);
-
-                    var key = post.url.KeepExceptLastNumbers().Replace("?see_lz=1&pn=", "");
-                    Tuple<string, int> tuple = Cache.Instance.Get(key);
-                    Cache.Instance.Remove(key);
-                    if (tuple.Item2 > 1)
+                    if (a.Results.ContainsKey("imgs"))
                     {
-                        Cache.Instance.Set(key, new Tuple<string, int>(tuple.Item1, tuple.Item2));
+                        var imgs = a.Results["imgs"] as List<baidutieba_imgs>;
+                        foreach (var c in imgs)
+                        {
+                            string intervalPath = null;
+                            var s = ((spider as Spider).Downloader as MyDownloader);
+                            if (s._customintervalPath)
+                            {
+                                intervalPath = $"{Env.PathSeperator}{new Uri(c.url).LocalPath.Replace("//", "").Replace("/", "")}";
+                            }
+                            else
+                            {
+                                intervalPath = new Uri(c.url).LocalPath.Replace("//", "/").Replace("/", Env.PathSeperator);
+                            }
+                            var t = intervalPath.Split(Env.PathSeperator[0]);
+                            c.filename = t[t.Length - 1];
+                            c.originalpath = $"{Path.Combine(Env.BaseDirectory, "download")}{Env.PathSeperator}{spider.Identity}{intervalPath}"
+                                .Replace(c.filename, "")
+                                ;
+                            c.spiderguid = spider.Identity;
+                            con.Execute("INSERT INTO baidutieba_imgs (spiderguid,postguid,url,filename,originalpath,floorlevel,floorindex,posttime) VALUES (@spiderguid,@postguid,@url,@filename,@originalpath,@floorlevel,@floorindex,@posttime)", c);
+                        }
+                    }
+                    if (a.Results.ContainsKey("post"))
+                    {
+                        var post = a.Results["post"] as baidutieba_posts;
+                        post.landlord = Regex.Replace(post.landlord, @"\uD83D[\uDC00-\uDFFF]|\uD83C[\uDC00-\uDFFF]|\uFFFD", "");
+                        post.title = Regex.Replace(post.title, @"\uD83D[\uDC00-\uDFFF]|\uD83C[\uDC00-\uDFFF]|\uFFFD", "");
+                        post.spiderguid = spider.Identity;
+                        con.Execute("INSERT INTO baidutieba_posts (guid,spiderguid,url,title,landlord,depth) VALUES (@guid,@spiderguid,@url,@title,@landlord,@depth)", post);
+
+                        var key = post.url.KeepExceptLastNumbers().Replace("?see_lz=1&pn=", "");
+                        Tuple<string, int> tuple = Cache.Instance.Get(key);
+                        Cache.Instance.Remove(key);
+                        if (tuple.Item2 > 1)
+                        {
+                            Cache.Instance.Set(key, new Tuple<string, int>(tuple.Item1, tuple.Item2));
+                        }
                     }
                 }
             }

@@ -15,349 +15,352 @@ using System.Runtime.Serialization.Formatters.Binary;
 
 namespace DotnetSpider.Core.Downloader
 {
-	/// <summary>
-	/// Downloader using <see cref="HttpClient"/>
-	/// </summary>
-	/// <summary xml:lang="zh-CN">
-	/// 纯HTTP下载器
-	/// </summary>
-	public class HttpClientDownloader : BaseDownloader
-	{
-		private HashSet<string> _initedCookieContainers = new HashSet<string>();
+    /// <summary>
+    /// Downloader using <see cref="HttpClient"/>
+    /// </summary>
+    /// <summary xml:lang="zh-CN">
+    /// 纯HTTP下载器
+    /// </summary>
+    public class HttpClientDownloader : BaseDownloader
+    {
+        private HashSet<string> _initedCookieContainers = new HashSet<string>();
 
-		/// <summary>
-		/// What mediatype should not be treated as file to download.
-		/// </summary>
-		/// <summary xml:lang="zh-CN">
-		/// 定义哪些类型的内容不需要当成文件下载
-		/// </summary>
-		public static HashSet<string> ExcludeMediaTypes = new HashSet<string>
-		{
-			"text/html",
-			"text/plain",
-			"text/richtext",
-			"text/xml",
-			"text/XML",
-			"text/json",
-			"text/javascript",
-			"application/soap+xml",
-			"application/xml",
-			"application/json",
-			"application/x-javascript",
-			"application/javascript",
-			"application/x-www-form-urlencoded"
-		};
+        private readonly static HttpClient client = new HttpClient();
 
-		private readonly string _downloadFolder;
-		private readonly bool _decodeHtml;
-		private readonly double _timeout = 8000;
 
-		public bool AllowAutoRedirect { get; set; } = true;
+        /// <summary>
+        /// What mediatype should not be treated as file to download.
+        /// </summary>
+        /// <summary xml:lang="zh-CN">
+        /// 定义哪些类型的内容不需要当成文件下载
+        /// </summary>
+        public static HashSet<string> ExcludeMediaTypes = new HashSet<string>
+        {
+            "text/html",
+            "text/plain",
+            "text/richtext",
+            "text/xml",
+            "text/XML",
+            "text/json",
+            "text/javascript",
+            "application/soap+xml",
+            "application/xml",
+            "application/json",
+            "application/x-javascript",
+            "application/javascript",
+            "application/x-www-form-urlencoded"
+        };
 
-		/// <summary>
-		/// A <see cref="HttpClient"/> pool
-		/// </summary>
-		/// <summary xml:lang="zh-CN">
-		/// HttpClient池
-		/// </summary>
-		public static IHttpClientPool HttpClientPool = new HttpClientPool();
+        private readonly string _downloadFolder;
+        private readonly bool _decodeHtml;
+        private readonly double _timeout = 8000;
 
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		/// <summary xml:lang="zh-CN">
-		/// 构造方法
-		/// </summary>
-		public HttpClientDownloader()
-		{
-			_downloadFolder = Path.Combine(Env.BaseDirectory, "download");
-		}
+        public bool AllowAutoRedirect { get; set; } = true;
 
-		/// <summary>
-		/// Constructor
-		/// </summary>
-		/// <summary xml:lang="zh-CN">
-		/// 构造方法
-		/// </summary>
-		/// <param name="timeout">下载超时时间 Download timeout.</param>
-		/// <param name="decodeHtml">下载的内容是否需要HTML解码 Whether <see cref="Page.Content"/> need to Html Decode.</param>
-		public HttpClientDownloader(int timeout = 8000, bool decodeHtml = false) : this()
-		{
-			_timeout = timeout;
-			_decodeHtml = decodeHtml;
-		}
+        /// <summary>
+        /// A <see cref="HttpClient"/> pool
+        /// </summary>
+        /// <summary xml:lang="zh-CN">
+        /// HttpClient池
+        /// </summary>
+        public static IHttpClientPool HttpClientPool = new HttpClientPool();
 
-		/// <summary>
-		/// Add cookies to download clients: HttpClient, WebDriver etc...
-		/// </summary>
-		/// <summary xml:lang="zh-CN">
-		/// 设置 Cookie 到下载客户端: HttpClient, WebDriver etc...
-		/// </summary>
-		/// <param name="cookie">Cookie</param>
-		protected override void AddCookieToDownloadClient(Cookie cookie)
-		{
-			HttpClientPool.AddCookie(cookie);
-		}
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <summary xml:lang="zh-CN">
+        /// 构造方法
+        /// </summary>
+        public HttpClientDownloader()
+        {
+            _downloadFolder = Path.Combine(Env.BaseDirectory, "download");
+        }
 
-		/// <summary>
-		/// Http download implemention
-		/// </summary>
-		/// <summary xml:lang="zh-CN">
-		/// HTTP下载的实现
-		/// </summary>
-		/// <param name="request">请求信息 <see cref="Request"/></param>
-		/// <param name="spider">爬虫 <see cref="ISpider"/></param>
-		/// <returns>页面数据 <see cref="Page"/></returns>
-		protected override async Task<Page> DowloadContent(Request request, ISpider spider)
-		{
-			HttpResponseMessage response = null;
-			try
-			{
-				var httpMessage = GenerateHttpRequestMessage(request, spider.Site);
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <summary xml:lang="zh-CN">
+        /// 构造方法
+        /// </summary>
+        /// <param name="timeout">下载超时时间 Download timeout.</param>
+        /// <param name="decodeHtml">下载的内容是否需要HTML解码 Whether <see cref="Page.Content"/> need to Html Decode.</param>
+        public HttpClientDownloader(int timeout = 8000, bool decodeHtml = false) : this()
+        {
+            _timeout = timeout;
+            _decodeHtml = decodeHtml;
+        }
 
-				HttpClientEntry httpClientEntry;
-				if (spider.Site.HttpProxyPool == null)
-				{
-					// Request可以设置不同的DownloaderGroup来使用不同的HttpClient
-					httpClientEntry = HttpClientPool.GetHttpClient(request.DownloaderGroup);
-				}
-				else
-				{
-					// TODO: 代理模式下: request.DownloaderGroup 再考虑
-					var proxy = spider.Site.HttpProxyPool.GetProxy();
-					request.Proxy = proxy;
-					httpClientEntry = HttpClientPool.GetHttpClient(proxy.Hash);
-				}
+        /// <summary>
+        /// Add cookies to download clients: HttpClient, WebDriver etc...
+        /// </summary>
+        /// <summary xml:lang="zh-CN">
+        /// 设置 Cookie 到下载客户端: HttpClient, WebDriver etc...
+        /// </summary>
+        /// <param name="cookie">Cookie</param>
+        protected override void AddCookieToDownloadClient(Cookie cookie)
+        {
+            HttpClientPool.AddCookie(cookie);
+        }
 
-				PrepareHttpClient(httpClientEntry);
+        /// <summary>
+        /// Http download implemention
+        /// </summary>
+        /// <summary xml:lang="zh-CN">
+        /// HTTP下载的实现
+        /// </summary>
+        /// <param name="request">请求信息 <see cref="Request"/></param>
+        /// <param name="spider">爬虫 <see cref="ISpider"/></param>
+        /// <returns>页面数据 <see cref="Page"/></returns>
+        protected override async Task<Page> DowloadContent(Request request, ISpider spider)
+        {
+            HttpResponseMessage response = null;
+            try
+            {
+                var httpMessage = GenerateHttpRequestMessage(request, spider.Site);
 
-				response = NetworkCenter.Current.Execute("http", () => httpClientEntry.Client.SendAsync(httpMessage).Result);
-				request.StatusCode = response.StatusCode;
-				response.EnsureSuccessStatusCode();
+                HttpClientEntry httpClientEntry;
+                if (spider.Site.HttpProxyPool == null)
+                {
+                    // Request可以设置不同的DownloaderGroup来使用不同的HttpClient
+                    httpClientEntry = HttpClientPool.GetHttpClient(request.DownloaderGroup);
+                }
+                else
+                {
+                    // TODO: 代理模式下: request.DownloaderGroup 再考虑
+                    var proxy = spider.Site.HttpProxyPool.GetProxy();
+                    request.Proxy = proxy;
+                    httpClientEntry = HttpClientPool.GetHttpClient(proxy.Hash);
+                }
 
-				Page page;
+                PrepareHttpClient(httpClientEntry);
+                response = client.SendAsync(httpMessage).Result;
+                //response = NetworkCenter.Current.Execute("http", () => httpClientEntry.Client.SendAsync(httpMessage).Result);
+                request.StatusCode = response.StatusCode;
+                response.EnsureSuccessStatusCode();
 
-				if (response.Content.Headers.ContentType != null && !ExcludeMediaTypes.Contains(response.Content.Headers.ContentType.MediaType))
-				{
-					if (!spider.Site.DownloadFiles)
-					{
-						Logger.Log(spider.Identity, $"Ignore: {request.Url} because media type is not allowed to download.", Level.Warn);
-						return await Task.FromResult(new Page(request) { Skip = true });
-					}
-					else
-					{
-						page = SaveFile(request, response, spider);
-					}
-				}
-				else
-				{
-					page = HandleResponse(request, response, spider.Site);
+                Page page;
 
-					if (string.IsNullOrWhiteSpace(page.Content))
-					{
-						Logger.Log(spider.Identity, $"Content is empty: {request.Url}.", Level.Warn);
-					}
-				}
+                if (response.Content.Headers.ContentType != null && !ExcludeMediaTypes.Contains(response.Content.Headers.ContentType.MediaType))
+                {
+                    if (!spider.Site.DownloadFiles)
+                    {
+                        Logger.Log(spider.Identity, $"Ignore: {request.Url} because media type is not allowed to download.", Level.Warn);
+                        return await Task.FromResult(new Page(request) { Skip = true });
+                    }
+                    else
+                    {
+                        page = SaveFile(request, response, spider);
+                    }
+                }
+                else
+                {
+                    page = HandleResponse(request, response, spider.Site);
 
-				page.TargetUrl = response.RequestMessage.RequestUri.AbsoluteUri;
+                    if (string.IsNullOrWhiteSpace(page.Content))
+                    {
+                        Logger.Log(spider.Identity, $"Content is empty: {request.Url}.", Level.Warn);
+                    }
+                }
 
-				return await Task.FromResult(page);
-			}
-			catch (Exception e)
-			{
-				var page = CreateRetryPage(e, request, spider);
-				return await Task.FromResult(page);
-			}
-			finally
-			{
-				try
-				{
-					response?.Dispose();
-				}
-				catch (Exception e)
-				{
-					Logger.Log(spider.Identity, $"Close response fail: {e}", Level.Error, e);
-				}
-			}
-		}
+                page.TargetUrl = response.RequestMessage.RequestUri.AbsoluteUri;
 
-		protected virtual string ReadContent(Site site, HttpResponseMessage response)
-		{
-			byte[] contentBytes = response.Content.ReadAsByteArrayAsync().Result;
-			contentBytes = PreventCutOff(contentBytes);
-			if (string.IsNullOrWhiteSpace(site.EncodingName))
-			{
-				var charSet = response.Content.Headers.ContentType?.CharSet;
-				Encoding htmlCharset = EncodingExtensions.GetEncoding(charSet, contentBytes);
-				return htmlCharset.GetString(contentBytes, 0, contentBytes.Length);
-			}
-			else
-			{
-				return site.Encoding.GetString(contentBytes, 0, contentBytes.Length);
-			}
-		}
+                return await Task.FromResult(page);
+            }
+            catch (Exception e)
+            {
+                var page = CreateRetryPage(e, request, spider);
+                return await Task.FromResult(page);
+            }
+            finally
+            {
+                try
+                {
+                    response?.Dispose();
+                }
+                catch (Exception e)
+                {
+                    Logger.Log(spider.Identity, $"Close response fail: {e}", Level.Error, e);
+                }
+            }
+        }
 
-		private Page HandleResponse(Request request, HttpResponseMessage response, Site site)
-		{
-			string content = ReadContent(site, response);
+        protected virtual string ReadContent(Site site, HttpResponseMessage response)
+        {
+            byte[] contentBytes = response.Content.ReadAsByteArrayAsync().Result;
+            contentBytes = PreventCutOff(contentBytes);
+            if (string.IsNullOrWhiteSpace(site.EncodingName))
+            {
+                var charSet = response.Content.Headers.ContentType?.CharSet;
+                Encoding htmlCharset = EncodingExtensions.GetEncoding(charSet, contentBytes);
+                return htmlCharset.GetString(contentBytes, 0, contentBytes.Length);
+            }
+            else
+            {
+                return site.Encoding.GetString(contentBytes, 0, contentBytes.Length);
+            }
+        }
 
-			if (_decodeHtml)
-			{
+        internal void PrepareHttpClient(HttpClientEntry httpClientEntry)
+        {
+            httpClientEntry.Init(AllowAutoRedirect, () =>
+            {
+                if (!Equals(httpClientEntry.Client.Timeout.TotalSeconds, _timeout))
+                {
+                    httpClientEntry.Client.Timeout = new TimeSpan(0, 0, (int)_timeout / 1000);
+                }
+            }, CopyCookieContainer);
+        }
+
+        private Page HandleResponse(Request request, HttpResponseMessage response, Site site)
+        {
+            string content = ReadContent(site, response);
+
+            if (_decodeHtml)
+            {
 #if NET45
 				content = HttpUtility.UrlDecode(HttpUtility.HtmlDecode(content), string.IsNullOrEmpty(site.EncodingName) ? Encoding.Default : site.Encoding);
 #else
-				content = System.Net.WebUtility.UrlDecode(System.Net.WebUtility.HtmlDecode(content));
+                content = System.Net.WebUtility.UrlDecode(System.Net.WebUtility.HtmlDecode(content));
 #endif
-			}
+            }
 
-			Page page = new Page(request)
-			{
-				Content = content
-			};
+            Page page = new Page(request)
+            {
+                Content = content
+            };
 
-			//foreach (var header in response.Headers)
-			//{
-			//	page.Request.PutExtra(header.Key, header.Value);
-			//}
+            //foreach (var header in response.Headers)
+            //{
+            //	page.Request.PutExtra(header.Key, header.Value);
+            //}
 
-			return page;
-		}
+            return page;
+        }
 
-		private void PrepareHttpClient(HttpClientEntry httpClientEntry)
-		{
-			httpClientEntry.Init(AllowAutoRedirect, () =>
-			{
-				if (!Equals(httpClientEntry.Client.Timeout.TotalSeconds, _timeout))
-				{
-					httpClientEntry.Client.Timeout = new TimeSpan(0, 0, (int)_timeout);
-				}
-			}, CopyCookieContainer);
-		}
+        private CookieContainer CopyCookieContainer()
+        {
+            using (MemoryStream stream = new MemoryStream())
+            {
+                BinaryFormatter formatter = new BinaryFormatter();
+                formatter.Serialize(stream, CookieContainer);
+                stream.Seek(0, SeekOrigin.Begin);
+                return (CookieContainer)formatter.Deserialize(stream);
+            }
+        }
 
-		private CookieContainer CopyCookieContainer()
-		{
-			using (MemoryStream stream = new MemoryStream())
-			{
-				BinaryFormatter formatter = new BinaryFormatter();
-				formatter.Serialize(stream, CookieContainer);
-				stream.Seek(0, SeekOrigin.Begin);
-				return (CookieContainer)formatter.Deserialize(stream);
-			}
-		}
+        private Page CreateRetryPage(Exception e, Request request, ISpider spider)
+        {
+            Page page = spider.Site.CycleRetryTimes > 0 ? spider.Site.AddToCycleRetry(request) : new Page(request);
+            if (page != null)
+            {
+                page.Exception = e;
+            }
 
-		private Page CreateRetryPage(Exception e, Request request, ISpider spider)
-		{
-			Page page = spider.Site.CycleRetryTimes > 0 ? spider.Site.AddToCycleRetry(request) : new Page(request);
-			if (page != null)
-			{
-				page.Exception = e;
-			}
+            Logger.Log(spider.Identity, $"Download {request.Url} failed: {e.Message}.", Level.Warn);
+            return page;
+        }
 
-			Logger.Log(spider.Identity, $"Download {request.Url} failed: {e.Message}.", Level.Warn);
-			return page;
-		}
+        private HttpRequestMessage GenerateHttpRequestMessage(Request request, Site site)
+        {
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(request.Method ?? HttpMethod.Get, request.Url);
 
-		private HttpRequestMessage GenerateHttpRequestMessage(Request request, Site site)
-		{
-			HttpRequestMessage httpRequestMessage = new HttpRequestMessage(request.Method ?? HttpMethod.Get, request.Url);
+            var userAgentHeader = "User-Agent";
+            httpRequestMessage.Headers.Add(userAgentHeader, site.Headers.ContainsKey(userAgentHeader) ? site.Headers[userAgentHeader] : site.UserAgent);
 
-			var userAgentHeader = "User-Agent";
-			httpRequestMessage.Headers.Add(userAgentHeader, site.Headers.ContainsKey(userAgentHeader) ? site.Headers[userAgentHeader] : site.UserAgent);
+            if (!string.IsNullOrWhiteSpace(request.Referer))
+            {
+                httpRequestMessage.Headers.Add("Referer", request.Referer);
+            }
 
-			if (!string.IsNullOrWhiteSpace(request.Referer))
-			{
-				httpRequestMessage.Headers.Add("Referer", request.Referer);
-			}
+            if (!string.IsNullOrWhiteSpace(request.Origin))
+            {
+                httpRequestMessage.Headers.Add("Origin", request.Origin);
+            }
 
-			if (!string.IsNullOrWhiteSpace(request.Origin))
-			{
-				httpRequestMessage.Headers.Add("Origin", request.Origin);
-			}
+            if (!string.IsNullOrWhiteSpace(site.Accept))
+            {
+                httpRequestMessage.Headers.Add("Accept", site.Accept);
+            }
 
-			if (!string.IsNullOrWhiteSpace(site.Accept))
-			{
-				httpRequestMessage.Headers.Add("Accept", site.Accept);
-			}
+            var contentTypeHeader = "Content-Type";
 
-			var contentTypeHeader = "Content-Type";
+            foreach (var header in site.Headers)
+            {
+                if (header.Key.ToLower() == "cookie")
+                {
+                    continue;
+                }
+                if (!string.IsNullOrWhiteSpace(header.Key) && !string.IsNullOrWhiteSpace(header.Value) && header.Key != contentTypeHeader && header.Key != userAgentHeader)
+                {
+                    httpRequestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value);
+                }
+            }
 
-			foreach (var header in site.Headers)
-			{
-				if (header.Key.ToLower() == "cookie")
-				{
-					continue;
-				}
-				if (!string.IsNullOrWhiteSpace(header.Key) && !string.IsNullOrWhiteSpace(header.Value) && header.Key != contentTypeHeader && header.Key != userAgentHeader)
-				{
-					httpRequestMessage.Headers.TryAddWithoutValidation(header.Key, header.Value);
-				}
-			}
-
-			if (httpRequestMessage.Method == HttpMethod.Post)
-			{
-				var data = string.IsNullOrWhiteSpace(site.EncodingName) ? Encoding.UTF8.GetBytes(request.PostBody) : site.Encoding.GetBytes(request.PostBody);
-				httpRequestMessage.Content = new StreamContent(new MemoryStream(data));
+            if (httpRequestMessage.Method == HttpMethod.Post)
+            {
+                var data = string.IsNullOrWhiteSpace(site.EncodingName) ? Encoding.UTF8.GetBytes(request.PostBody) : site.Encoding.GetBytes(request.PostBody);
+                httpRequestMessage.Content = new StreamContent(new MemoryStream(data));
 
 
-				if (site.Headers.ContainsKey(contentTypeHeader))
-				{
-					httpRequestMessage.Content.Headers.TryAddWithoutValidation(contentTypeHeader, site.Headers[contentTypeHeader]);
-				}
+                if (site.Headers.ContainsKey(contentTypeHeader))
+                {
+                    httpRequestMessage.Content.Headers.TryAddWithoutValidation(contentTypeHeader, site.Headers[contentTypeHeader]);
+                }
 
-				var xRequestedWithHeader = "X-Requested-With";
-				if (site.Headers.ContainsKey(xRequestedWithHeader) && site.Headers[xRequestedWithHeader] == "NULL")
-				{
-					httpRequestMessage.Content.Headers.Remove(xRequestedWithHeader);
-				}
-				else
-				{
-					if (!httpRequestMessage.Content.Headers.Contains(xRequestedWithHeader) && !httpRequestMessage.Headers.Contains(xRequestedWithHeader))
-					{
-						httpRequestMessage.Content.Headers.TryAddWithoutValidation(xRequestedWithHeader, "XMLHttpRequest");
-					}
-				}
-			}
-			return httpRequestMessage;
-		}
+                var xRequestedWithHeader = "X-Requested-With";
+                if (site.Headers.ContainsKey(xRequestedWithHeader) && site.Headers[xRequestedWithHeader] == "NULL")
+                {
+                    httpRequestMessage.Content.Headers.Remove(xRequestedWithHeader);
+                }
+                else
+                {
+                    if (!httpRequestMessage.Content.Headers.Contains(xRequestedWithHeader) && !httpRequestMessage.Headers.Contains(xRequestedWithHeader))
+                    {
+                        httpRequestMessage.Content.Headers.TryAddWithoutValidation(xRequestedWithHeader, "XMLHttpRequest");
+                    }
+                }
+            }
+            return httpRequestMessage;
+        }
 
-		public virtual Page SaveFile(Request request, HttpResponseMessage response, ISpider spider)
-		{
-			var intervalPath = new Uri(request.Url).LocalPath.Replace("//", "/").Replace("/", Env.PathSeperator);
-			string filePath = $"{_downloadFolder}{Env.PathSeperator}{spider.Identity}{intervalPath}";
-			if (!File.Exists(filePath))
-			{
-				try
-				{
-					string folder = Path.GetDirectoryName(filePath);
-					if (!string.IsNullOrWhiteSpace(folder))
-					{
-						if (!Directory.Exists(folder))
-						{
-							Directory.CreateDirectory(folder);
-						}
-					}
+        public virtual Page SaveFile(Request request, HttpResponseMessage response, ISpider spider)
+        {
+            var intervalPath = new Uri(request.Url).LocalPath.Replace("//", "/").Replace("/", Env.PathSeperator);
+            string filePath = $"{_downloadFolder}{Env.PathSeperator}{spider.Identity}{intervalPath}";
+            if (!File.Exists(filePath))
+            {
+                try
+                {
+                    string folder = Path.GetDirectoryName(filePath);
+                    if (!string.IsNullOrWhiteSpace(folder))
+                    {
+                        if (!Directory.Exists(folder))
+                        {
+                            Directory.CreateDirectory(folder);
+                        }
+                    }
 
-					File.WriteAllBytes(filePath, response.Content.ReadAsByteArrayAsync().Result);
-				}
-				catch (Exception e)
-				{
-					Logger.Log(spider.Identity, "Storage file failed.", Level.Error, e);
-				}
-			}
-			Logger.Log(spider.Identity, $"Storage file: {request.Url} success.", Level.Info);
-			return new Page(request) { Skip = true };
-		}
+                    File.WriteAllBytes(filePath, response.Content.ReadAsByteArrayAsync().Result);
+                }
+                catch (Exception e)
+                {
+                    Logger.Log(spider.Identity, "Storage file failed.", Level.Error, e);
+                }
+            }
+            Logger.Log(spider.Identity, $"Storage file: {request.Url} success.", Level.Info);
+            return new Page(request) { Skip = true };
+        }
 
-		private byte[] PreventCutOff(byte[] bytes)
-		{
-			for (int i = 0; i < bytes.Length; i++)
-			{
-				if (bytes[i] == 0x00)
-				{
-					bytes[i] = 32;
-				}
-			}
-			return bytes;
-		}
-	}
+        private byte[] PreventCutOff(byte[] bytes)
+        {
+            for (int i = 0; i < bytes.Length; i++)
+            {
+                if (bytes[i] == 0x00)
+                {
+                    bytes[i] = 32;
+                }
+            }
+            return bytes;
+        }
+    }
 }
